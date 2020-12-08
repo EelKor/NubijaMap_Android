@@ -37,7 +37,7 @@ class BikeFragment: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        Log.d(TAG, "HomeFragment - onCreateView() called")
+        Log.d(TAG, "BikeFragment - onCreateView() called")
 
         val view = inflater.inflate(R.layout.fragment_bike, container, false)
 

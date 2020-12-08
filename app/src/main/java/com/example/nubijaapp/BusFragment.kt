@@ -23,6 +23,7 @@ class BusFragment: Fragment() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "BusFragment - onCreate() called")
 
+
     }
 
     //프레그먼트를 안고 있는 액티비티에 붙었을때
