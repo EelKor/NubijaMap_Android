@@ -18,6 +18,11 @@
         </activity>
 
         <activity android:name=".MainActivity"></activity>
+
+        <meta-data
+            android:name="com.naver.maps.map.CLIENT_ID"
+            android:value="61eyickbg8"/>
+
     </application>
 
 </manifest>
