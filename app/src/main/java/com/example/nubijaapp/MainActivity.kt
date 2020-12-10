@@ -5,14 +5,24 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.naver.maps.geometry.LatLng
+import com.naver.maps.map.LocationTrackingMode
 import com.naver.maps.map.MapFragment
 import com.naver.maps.map.NaverMap
+import com.naver.maps.map.OnMapReadyCallback
+import com.naver.maps.map.overlay.Marker
+import com.naver.maps.map.util.FusedLocationSource
 
-class MainActivity : AppCompatActivity() {
-    //멤버 변수 선언
+class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+    //프레그먼트 멤버 변수 선언
     private lateinit var bikeFragment: BikeFragment
     private lateinit var busFragment: BusFragment
+
+    //위치정보 멤버 변수 선언
+    private lateinit var locationSource: FusedLocationSource
+    private lateinit var naverMap: NaverMap
 
 
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
@@ -23,6 +33,7 @@ class MainActivity : AppCompatActivity() {
         companion object {
             const val TAG: String = "로그"
         }
+
 
 
     //메모리에 올라갔을때
@@ -44,12 +55,36 @@ class MainActivity : AppCompatActivity() {
 
         // 현재 화면에 Fragment 추가
         val fm = supportFragmentManager
-        val mapFragment = fm.findFragmentById(R.id.fragment_frame) as MapFragment?
+        val mapFragment = fm.findFragmentById(R.id.map) as MapFragment?
                 ?: MapFragment.newInstance().also {
-                    fm.beginTransaction().add(R.id.fragment_frame, it).commit()
+                    fm.beginTransaction().add(R.id.map, it).commit()
                 }
 
+
+        //NaverMap 객체 얻어오기
+        //OnMapReady() 호출됨
+        mapFragment.getMapAsync(this)
+
+        //LOCATION_PERMISSION_CODE
+        locationSource =
+                FusedLocationSource(this, 1000)
+
     }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+
+        Log.d(TAG, "MainActivity : onRequestPermissionResult() called ")
+
+        if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults))  {
+            if (locationSource.isActivated) {   //권한 거부됨
+                naverMap.locationTrackingMode = LocationTrackingMode.None
+            }
+            return
+        }
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
 
 
 
@@ -62,6 +97,7 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "MainActivity - 자전거 클릭")
                 bikeFragment = BikeFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, bikeFragment).commit()
+                
             }
 
             R.id.menu_bus -> {
@@ -83,6 +119,8 @@ class MainActivity : AppCompatActivity() {
 
     // 뒤로가기 버튼 이 눌러졌을때
     override fun onBackPressed() {
+
+        //뒤로가기 2번 누를때 종료 기능 구현
         if (System.currentTimeMillis() - mBackWait >= 2000){
 
             //디버깅을 위해 로그 삽입
@@ -92,9 +130,30 @@ class MainActivity : AppCompatActivity() {
         }
 
         else{
+            Log.d(TAG,"MainActivity - 프로그램 종료")
             finish()
         }
     }
 
+    // mapFragment.getMapAsync(this) 에 의해 호출됨
+    override fun onMapReady(naverMap: NaverMap) {
+        Log.d(TAG, "MainActivity : onMapReady() called")
 
-}
+        //지도 UI 세팅
+        val uiSettings = naverMap.uiSettings
+        uiSettings.isLocationButtonEnabled = true
+        uiSettings.isZoomControlEnabled = false
+
+
+        val locationOverlay = naverMap.locationOverlay
+        locationOverlay.isVisible = true
+        locationOverlay.position = locationSource
+
+        //지도 위치 마커 표시
+
+        this.naverMap = naverMap
+        naverMap.locationSource = locationSource
+
+        }
+    }
+

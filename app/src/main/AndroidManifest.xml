@@ -11,7 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.NubijaApp">
-        <activity android:name=".AboutActivity"></activity>
+        <activity android:name=".MenuAboutActivity"></activity>
         <activity android:name=".MenuActivity" /> <!-- 액티비티 리스트 -->
         <activity android:name=".SplashActivity">
             <intent-filter>
