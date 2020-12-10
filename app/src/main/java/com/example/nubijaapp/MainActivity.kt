@@ -1,16 +1,18 @@
 package com.example.nubijaapp
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.naver.maps.map.MapFragment
+import com.naver.maps.map.NaverMap
 
 class MainActivity : AppCompatActivity() {
     //멤버 변수 선언
     private lateinit var bikeFragment: BikeFragment
     private lateinit var busFragment: BusFragment
-    private lateinit var menuFragment: MenuFragment
 
 
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
@@ -35,8 +37,18 @@ class MainActivity : AppCompatActivity() {
         //Id값의 옵션에 접근
         val bottom_nav : com.google.android.material.bottomnavigation.BottomNavigationView = findViewById(R.id.bottom_nav)
         bottom_nav.setOnNavigationItemSelectedListener(onBottomNavItemSelectedListener)
+
+        // (초기화면) bikeFragment.kt 최초로 불러오기
         bikeFragment = BikeFragment.newInstance()
-        supportFragmentManager.beginTransaction().add(R.id.fragment_frame, bikeFragment).commit()
+        supportFragmentManager.beginTransaction().add(R.id.info_frame, bikeFragment).commit()
+
+        // 현재 화면에 Fragment 추가
+        val fm = supportFragmentManager
+        val mapFragment = fm.findFragmentById(R.id.fragment_frame) as MapFragment?
+                ?: MapFragment.newInstance().also {
+                    fm.beginTransaction().add(R.id.fragment_frame, it).commit()
+                }
+
     }
 
 
@@ -49,25 +61,24 @@ class MainActivity : AppCompatActivity() {
             R.id.menu_bike -> {
                 Log.d(TAG, "MainActivity - 자전거 클릭")
                 bikeFragment = BikeFragment.newInstance()
-                supportFragmentManager.beginTransaction().replace(R.id.fragment_frame, bikeFragment).commit()
+                supportFragmentManager.beginTransaction().replace(R.id.info_frame, bikeFragment).commit()
             }
 
             R.id.menu_bus -> {
                 Log.d(TAG, "MainActivity - 버스 클릭")
                 busFragment = BusFragment.newInstance()
-                supportFragmentManager.beginTransaction().replace(R.id.fragment_frame, busFragment).commit()
+                supportFragmentManager.beginTransaction().replace(R.id.info_frame, busFragment).commit()
 
             }
 
             R.id.menu_menu1 -> {
                 Log.d(TAG, "MainActivity - 메뉴1클릭")
-                menuFragment = MenuFragment.newInstance()
-                supportFragmentManager.beginTransaction().replace(R.id.fragment_frame, menuFragment).commit()
+                val menuIntent = Intent(this, MenuActivity::class.java)
+                startActivity(menuIntent)
             }
         }
         true
     }
-
 
 
     // 뒤로가기 버튼 이 눌러졌을때

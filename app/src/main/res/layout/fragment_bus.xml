@@ -11,15 +11,9 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="버스_map"
+        android:text="버스_info"
         android:textSize="50dp"
 
         />
-
-    <fragment android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/map"
-        android:name="com.naver.maps.map.MapFragment" />
-
 
 </LinearLayout>

@@ -8,12 +8,21 @@
     tools:context=".MainActivity">
 
     <FrameLayout
-        android:id="@+id/fragment_frame"
+        android:id="@+id/info_frame"
 
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@id/bottom_nav"
+        android:layout_height="100dp"
         android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+
+        />
+
+    <FrameLayout
+        android:id="@+id/fragment_frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/info_frame"
+        android:layout_above="@id/bottom_nav"
         android:layout_centerHorizontal="true"
         android:background="@color/design_default_color_on_primary"
 
@@ -30,7 +39,6 @@
 
     app:menu="@menu/bottom_nav_menu"
     app:labelVisibilityMode="unlabeled"
-
     />
 
 </RelativeLayout>
