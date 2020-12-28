@@ -1,6 +1,7 @@
 package com.example.nubijaapp
 
 import android.content.Intent
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -14,6 +15,7 @@ import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.FusedLocationSource
+import com.naver.maps.map.util.MarkerIcons
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     //프레그먼트 멤버 변수 선언
@@ -92,11 +94,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val onBottomNavItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener {
         //스위치 문
         // 하단 내비게이션 바 버튼이 클릭 됬을때 실행할 동작
+        val marker = Marker()
+        marker.map = null
+
         when(it.itemId){
             R.id.menu_bike -> {
                 Log.d(TAG, "MainActivity - 자전거 클릭")
                 bikeFragment = BikeFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, bikeFragment).commit()
+
+                marker.map = null
+                marker.width = Marker.SIZE_AUTO
+                marker.height = Marker.SIZE_AUTO
+                marker.position = LatLng(35.22773370309257, 128.6821961402893)
+                marker.map = naverMap
+
                 
             }
 
@@ -105,6 +117,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 busFragment = BusFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, busFragment).commit()
 
+                marker.map = null
+                marker.icon = MarkerIcons.BLACK
+                marker.iconTintColor = Color.BLUE
+                marker.width = Marker.SIZE_AUTO
+                marker.height = Marker.SIZE_AUTO
+                marker.position = LatLng(35.22773370309257, 128.6821961402893)
+
+                marker.map = naverMap
+
             }
 
             R.id.menu_menu1 -> {
@@ -112,6 +133,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 val menuIntent = Intent(this, MenuActivity::class.java)
                 startActivity(menuIntent)
             }
+
         }
         true
     }
@@ -144,15 +166,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         uiSettings.isLocationButtonEnabled = true
         uiSettings.isZoomControlEnabled = false
 
-
+        //지도 오버레이 활성화
         val locationOverlay = naverMap.locationOverlay
         locationOverlay.isVisible = true
-        locationOverlay.position = locationSource
-
-        //지도 위치 마커 표시
 
         this.naverMap = naverMap
         naverMap.locationSource = locationSource
+
+        locationOverlay.position = LatLng(35.22773370309257, 128.6821961402893)
 
         }
     }
