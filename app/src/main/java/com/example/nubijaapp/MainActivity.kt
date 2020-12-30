@@ -26,6 +26,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var locationSource: FusedLocationSource
     private lateinit var naverMap: NaverMap
 
+    //네이버 지도 마커
+    private var greenMarker = Marker()
+    private var blueMarker = Marker()
+
 
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
     private var mBackWait:Long = 0
@@ -103,12 +107,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 bikeFragment = BikeFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, bikeFragment).commit()
 
-                marker.map = null
-                marker.width = Marker.SIZE_AUTO
-                marker.height = Marker.SIZE_AUTO
-                marker.position = LatLng(35.22773370309257, 128.6821961402893)
-                marker.map = naverMap
-
                 
             }
 
@@ -117,14 +115,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 busFragment = BusFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, busFragment).commit()
 
-                marker.map = null
-                marker.icon = MarkerIcons.BLACK
-                marker.iconTintColor = Color.BLUE
-                marker.width = Marker.SIZE_AUTO
-                marker.height = Marker.SIZE_AUTO
-                marker.position = LatLng(35.22773370309257, 128.6821961402893)
-
-                marker.map = naverMap
 
             }
 
@@ -174,6 +164,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         naverMap.locationSource = locationSource
 
         locationOverlay.position = LatLng(35.22773370309257, 128.6821961402893)
+
+        //자전거 마커 초기설정
+        greenMarker.map = null
+        greenMarker.icon = MarkerIcons.BLACK
+        greenMarker.iconTintColor = Color.BLUE
+        greenMarker.width = Marker.SIZE_AUTO
+        greenMarker.height = Marker.SIZE_AUTO
+        greenMarker.position = LatLng(35.22773370309257, 128.6821961402893)
+        greenMarker.map = naverMap
+
+        // 버스 마커 초기 설정
+        blueMarker.map = null
+        blueMarker.icon = MarkerIcons.BLACK
+        blueMarker.iconTintColor = Color.BLUE
+        blueMarker.width = Marker.SIZE_AUTO
+        blueMarker.height = Marker.SIZE_AUTO
+        blueMarker.position = LatLng(35.22773370309257, 128.6821961402893)
+        
 
         }
     }
