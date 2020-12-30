@@ -1,18 +1,13 @@
 package com.example.nubijaapp
 
 import android.content.Intent
-import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.naver.maps.geometry.LatLng
-import com.naver.maps.map.LocationTrackingMode
-import com.naver.maps.map.MapFragment
-import com.naver.maps.map.NaverMap
-import com.naver.maps.map.OnMapReadyCallback
+import com.naver.maps.map.*
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
@@ -107,6 +102,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 bikeFragment = BikeFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, bikeFragment).commit()
 
+                // 버스 마커 제거 및 자전거 마커 생성
+                blueMarker.map = null
+                greenMarker.map = naverMap
+
                 
             }
 
@@ -114,6 +113,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 Log.d(TAG, "MainActivity - 버스 클릭")
                 busFragment = BusFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, busFragment).commit()
+
+                // 자전거 마커 제거, 버스 마커 생성
+                greenMarker.map = null
+                blueMarker.map = naverMap
 
 
             }
@@ -151,24 +154,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(naverMap: NaverMap) {
         Log.d(TAG, "MainActivity : onMapReady() called")
 
+        // 앱 실행시 초기 화면
+        val initialPosition = LatLng(35.22773370309257, 128.6821961402893)
+        val cameraUpdate = CameraUpdate.scrollTo(initialPosition)
+        naverMap.moveCamera(cameraUpdate)
+
+
         //지도 UI 세팅
         val uiSettings = naverMap.uiSettings
         uiSettings.isLocationButtonEnabled = true
         uiSettings.isZoomControlEnabled = false
 
         //지도 오버레이 활성화
-        val locationOverlay = naverMap.locationOverlay
-        locationOverlay.isVisible = true
+        val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
+        locationOverlay.isVisible = true                                                            // 오버레이 활성화
 
         this.naverMap = naverMap
         naverMap.locationSource = locationSource
+        locationOverlay.position =  LatLng(35.22773370309257, 128.6821961402893)
 
-        locationOverlay.position = LatLng(35.22773370309257, 128.6821961402893)
 
         //자전거 마커 초기설정
         greenMarker.map = null
-        greenMarker.icon = MarkerIcons.BLACK
-        greenMarker.iconTintColor = Color.BLUE
+        greenMarker.icon = MarkerIcons.GREEN
         greenMarker.width = Marker.SIZE_AUTO
         greenMarker.height = Marker.SIZE_AUTO
         greenMarker.position = LatLng(35.22773370309257, 128.6821961402893)
@@ -176,12 +184,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // 버스 마커 초기 설정
         blueMarker.map = null
-        blueMarker.icon = MarkerIcons.BLACK
-        blueMarker.iconTintColor = Color.BLUE
+        blueMarker.icon = MarkerIcons.BLUE
         blueMarker.width = Marker.SIZE_AUTO
         blueMarker.height = Marker.SIZE_AUTO
         blueMarker.position = LatLng(35.22773370309257, 128.6821961402893)
-        
+
 
         }
     }
