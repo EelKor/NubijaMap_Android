@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.naver.maps.map.NaverMap
 
 class BikeFragment: Fragment() {
 
@@ -43,4 +44,5 @@ class BikeFragment: Fragment() {
 
         return view
     }
+
 }

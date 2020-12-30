@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.nubijaapp">
+    <!-- 네이버 지도 위치 정보 수집 동의 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -9,15 +11,19 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.NubijaApp">
+        <activity android:name=".MenuAboutActivity"></activity>
+        <activity android:name=".MenuActivity" /> <!-- 액티비티 리스트 -->
+        <activity android:name=".SplashActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
-        <activity android:name=".SplashActivity"><intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
-
-        <activity android:name=".MainActivity"></activity>
+        <activity android:name=".MainActivity" /> <!-- 네이버 지도 인증 키 -->
+        <meta-data
+            android:name="com.naver.maps.map.CLIENT_ID"
+            android:value="61eyickbg8" />
     </application>
 
 </manifest>

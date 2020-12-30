@@ -18,6 +18,12 @@ allprojects {
     repositories {
         google()
         jcenter()
+
+        //네이버 지도 API 로딩
+        maven{
+          url "https://navercorp.bintray.com/maps"
+        }
+
     }
 }
 
