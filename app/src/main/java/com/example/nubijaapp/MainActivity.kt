@@ -180,6 +180,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         greenMarker.width = Marker.SIZE_AUTO
         greenMarker.height = Marker.SIZE_AUTO
         greenMarker.position = LatLng(35.22773370309257, 128.6821961402893)
+        greenMarker.position = LatLng(35.2285487,128.6789816)
         greenMarker.map = naverMap
 
         // 버스 마커 초기 설정
