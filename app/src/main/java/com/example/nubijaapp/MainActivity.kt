@@ -23,7 +23,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var locationSource: FusedLocationSource
     private lateinit var naverMap: NaverMap
 
+    //누비자 정류장 정보
     private lateinit var bikeStationResult: BikeStationResult
+
+    //누비자 마커 리스트
+    private var nubijaMarkerList = ArrayList<Marker>()
 
 
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
@@ -102,12 +106,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 bikeFragment = BikeFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, bikeFragment).commit()
 
+                if (nubijaMarkerList != null) {
+                    for (marker in nubijaMarkerList) {
+                        marker.map = naverMap
+                    }
+                }
+
+                else {
+                    fetchBikeStation()
+                }
+
             }
 
             R.id.menu_bus -> {
                 Log.d(TAG, "MainActivity - 버스 클릭")
                 busFragment = BusFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, busFragment).commit()
+                resetNubijaMarkerList()
 
             }
 
@@ -155,6 +170,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         this.naverMap = naverMap
         naverMap.locationSource = locationSource
+
         locationOverlay.position =  LatLng(35.22773370309257, 128.6821961402893)
         fetchBikeStation()
 
@@ -200,7 +216,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         Log.d(TAG, "MainAcitivity - updateMapMarker() called")
 
-        if ( result.stations.size > 0)    {
+        if ( result.stations.size > 0){
 
             Log.d(TAG, "updateMapMarker() - If gate passed")
 
@@ -209,8 +225,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                  marker.position = LatLng(bikestations.lat, bikestations.lng)
                  marker.icon = MarkerIcons.GREEN
                  marker.map = naverMap
+                 nubijaMarkerList.add(marker)
              }
         }
+
+    }
+
+    private fun resetNubijaMarkerList(){
+        if (nubijaMarkerList != null && nubijaMarkerList.size > 0) {
+            for (marker in nubijaMarkerList) {
+                marker.map = null
+            }
+        }
+
     }
 }
 
