@@ -11,6 +11,7 @@ import com.naver.maps.map.*
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     //프레그먼트 멤버 변수 선언
@@ -20,10 +21,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     //위치정보 멤버 변수 선언
     private lateinit var locationSource: FusedLocationSource
     private lateinit var naverMap: NaverMap
-
-    //네이버 지도 마커
-    private var greenMarker = Marker()
-    private var blueMarker = Marker()
 
 
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
@@ -102,22 +99,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 bikeFragment = BikeFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, bikeFragment).commit()
 
-                // 버스 마커 제거 및 자전거 마커 생성
-                blueMarker.map = null
-                greenMarker.map = naverMap
-
-                
             }
 
             R.id.menu_bus -> {
                 Log.d(TAG, "MainActivity - 버스 클릭")
                 busFragment = BusFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, busFragment).commit()
-
-                // 자전거 마커 제거, 버스 마커 생성
-                greenMarker.map = null
-                blueMarker.map = naverMap
-
 
             }
 
@@ -154,12 +141,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(naverMap: NaverMap) {
         Log.d(TAG, "MainActivity : onMapReady() called")
 
-        // 앱 실행시 초기 화면
-        val initialPosition = LatLng(35.22773370309257, 128.6821961402893)
-        val cameraUpdate = CameraUpdate.scrollTo(initialPosition)
-        naverMap.moveCamera(cameraUpdate)
-
-
         //지도 UI 세팅
         val uiSettings = naverMap.uiSettings
         uiSettings.isLocationButtonEnabled = true
@@ -172,25 +153,70 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         this.naverMap = naverMap
         naverMap.locationSource = locationSource
         locationOverlay.position =  LatLng(35.22773370309257, 128.6821961402893)
-
-
-        //자전거 마커 초기설정
-        greenMarker.map = null
-        greenMarker.icon = MarkerIcons.GREEN
-        greenMarker.width = Marker.SIZE_AUTO
-        greenMarker.height = Marker.SIZE_AUTO
-        greenMarker.position = LatLng(35.22773370309257, 128.6821961402893)
-        greenMarker.position = LatLng(35.2285487,128.6789816)
-        greenMarker.map = naverMap
-
-        // 버스 마커 초기 설정
-        blueMarker.map = null
-        blueMarker.icon = MarkerIcons.BLUE
-        blueMarker.width = Marker.SIZE_AUTO
-        blueMarker.height = Marker.SIZE_AUTO
-        blueMarker.position = LatLng(35.22773370309257, 128.6821961402893)
+        fetchBikeStation()
 
 
         }
+
+    // 누비자 스테이션 정보 추출 및 마커 생성
+    private fun fetchBikeStation()  {
+
+        Log.d(TAG, "MainActivity - fetchBikeStation() called")
+
+        val lists = ArrayList<BikeStation>()
+        try {
+            val assetManager = resources.assets
+            val inputStream = assetManager.open("nubija.json")
+            val jsonString = inputStream.bufferedReader().use { it.readLine() }
+
+            val jObject = JSONObject(jsonString)
+            val jArray = jObject.getJSONArray("Terminalinfo")
+
+            for (i in 0 until jArray.length()) {
+
+                val obj = jArray.getJSONObject(i)
+                val name = obj.getString("Tmname")
+                val lats = obj.getString("latitude")
+                val lngs = obj.getString("longitude")
+                val vno = obj.getString("Vno")
+
+                lists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt()))
+            }
+
+            updateMapMarker(BikeStationResult(lists))
+            lists.clear()
+
+        } finally {
+            val marker = Marker()
+            marker.position = LatLng(35.22773370309257, 128.6821961402893)
+            marker.map = naverMap
+
+        }
+
     }
+
+    // 마커 생성 메소드 - fetchBikeStation 에 의해 호출됨
+    private fun updateMapMarker(result: BikeStationResult){
+
+        Log.d(TAG, "MainAcitivity - updateMapMarker() called")
+
+        if ( result.stations.size > 0)    {
+
+            Log.d(TAG, "updateMapMarker() - If gate passed")
+
+             for (bikestations in result.stations)  {
+                 val marker = Marker()
+                 marker.position(bikestations.lat, bikestations.lng)
+                 marker.icon = MarkerIcons.GREEN
+                 marker.map = naverMap
+             }
+        }
+    }
+}
+
+// updateMapMarker 에서 marker.position 을 표시 하기위한 오퍼레이터
+// LatLng 형식으로 형변환
+private operator fun LatLng.invoke(lat: Double, lng: Double) {
+
+}
 
