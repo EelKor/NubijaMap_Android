@@ -1,6 +1,7 @@
 package com.example.nubijaapp
 
 import android.content.Intent
+import android.content.res.AssetManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -21,6 +22,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     //위치정보 멤버 변수 선언
     private lateinit var locationSource: FusedLocationSource
     private lateinit var naverMap: NaverMap
+
+    private lateinit var bikeStationResult: BikeStationResult
 
 
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
@@ -160,38 +163,35 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // 누비자 스테이션 정보 추출 및 마커 생성
     private fun fetchBikeStation()  {
+        val bikeStationlists = ArrayList<BikeStation>()
 
         Log.d(TAG, "MainActivity - fetchBikeStation() called")
 
-        val lists = ArrayList<BikeStation>()
-        try {
-            val assetManager = resources.assets
-            val inputStream = assetManager.open("nubija.json")
-            val jsonString = inputStream.bufferedReader().use { it.readLine() }
+        val assetManager:AssetManager = resources.assets
+        val inputStream = assetManager.open("nubija.json")
+        val jsonString = inputStream.bufferedReader().use { it.readText() }
 
-            val jObject = JSONObject(jsonString)
-            val jArray = jObject.getJSONArray("Terminalinfo")
+        Log.d(TAG, "fetchBikeStaion() - $jsonString")
 
-            for (i in 0 until jArray.length()) {
+        val jObject = JSONObject(jsonString)
+        val jArray = jObject.getJSONArray("TerminalInfo")
 
-                val obj = jArray.getJSONObject(i)
-                val name = obj.getString("Tmname")
-                val lats = obj.getString("latitude")
-                val lngs = obj.getString("longitude")
-                val vno = obj.getString("Vno")
+        Log.d(TAG, "fetchBikeStation() - $jArray")
+        for (i in 0 until jArray.length()) {
 
-                lists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt()))
-            }
+            Log.d(TAG, "fetchBikeStation() - JSON Parsing $i")
+            val obj = jArray.getJSONObject(i)
+            val name = obj.getString("Tmname")
+            val lats = obj.getString("Latitude")
+            val lngs = obj.getString("Longitude")
+            val vno = obj.getString("Vno")
 
-            updateMapMarker(BikeStationResult(lists))
-            lists.clear()
-
-        } finally {
-            val marker = Marker()
-            marker.position = LatLng(35.22773370309257, 128.6821961402893)
-            marker.map = naverMap
-
+            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt()))
         }
+        bikeStationResult = BikeStationResult(bikeStationlists)
+        updateMapMarker(bikeStationResult)
+
+
 
     }
 
@@ -206,17 +206,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
              for (bikestations in result.stations)  {
                  val marker = Marker()
-                 marker.position(bikestations.lat, bikestations.lng)
+                 marker.position = LatLng(bikestations.lat, bikestations.lng)
                  marker.icon = MarkerIcons.GREEN
                  marker.map = naverMap
              }
         }
     }
-}
-
-// updateMapMarker 에서 marker.position 을 표시 하기위한 오퍼레이터
-// LatLng 형식으로 형변환
-private operator fun LatLng.invoke(lat: Double, lng: Double) {
-
 }
 
