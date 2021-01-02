@@ -8,10 +8,6 @@ class MenuAboutActivity : AppCompatActivity() {
 
     companion object {
         const val TAG : String = "로그"
-
-        fun newInstance() : BusFragment {
-            return BusFragment()
-        }
     }
 
 

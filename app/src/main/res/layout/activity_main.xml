@@ -5,30 +5,44 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
     tools:context=".MainActivity">
 
-    <FrameLayout
-        android:id="@+id/info_frame"
+<FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_alignParentTop="true"
+    android:layout_above="@id/bottom_nav">
 
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
 
-        />
-
-    <FrameLayout
+    <fragment
         android:id="@+id/map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/info_frame"
-        android:layout_above="@id/bottom_nav"
-        android:layout_centerHorizontal="true"
-        android:background="@color/design_default_color_on_primary"
-
+        android:name="com.naver.maps.map.MapFragment"
         />
 
-<com.google.android.material.bottomnavigation.BottomNavigationView
+    <LinearLayout
+        android:id="@+id/info_window"
+        android:gravity="top"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="@color/white"
+        android:orientation="vertical"
+        android:visibility="gone"
+        >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="123text"/>
+    </LinearLayout>
+
+</FrameLayout>
+
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
     android:id="@+id/bottom_nav"
     
     android:layout_width="match_parent"

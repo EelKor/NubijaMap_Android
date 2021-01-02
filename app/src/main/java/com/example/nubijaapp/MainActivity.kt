@@ -3,26 +3,25 @@ package com.example.nubijaapp
 import android.content.Context
 import android.content.Intent
 import android.content.res.AssetManager
-import android.graphics.PointF
 import android.os.*
 import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
+import android.view.View
+import android.view.animation.TranslateAnimation
+import android.widget.LinearLayout
 import android.widget.Toast
+import com.example.nubijaapp.R.id.info_window
 import com.example.nubijaapp.R.id.menu_bike
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.naver.maps.geometry.Coord
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
 import org.json.JSONObject
-import java.util.concurrent.Executor
+
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
-    //프레그먼트 멤버 변수 선언
-    private lateinit var bikeFragment: BikeFragment
-    private lateinit var busFragment: BusFragment
 
     //위치정보 멤버 변수 선언
     private lateinit var locationSource: FusedLocationSource
@@ -63,9 +62,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val bottom_nav : com.google.android.material.bottomnavigation.BottomNavigationView = findViewById(R.id.bottom_nav)
         bottom_nav.setOnNavigationItemSelectedListener(onBottomNavItemSelectedListener)
 
-        // (초기화면) bikeFragment.kt 최초로 불러오기
-        bikeFragment = BikeFragment.newInstance()
-        supportFragmentManager.beginTransaction().add(R.id.info_frame, bikeFragment).commit()
+
 
         // 현재 화면에 Fragment 추가
         val fm = supportFragmentManager
@@ -111,8 +108,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 Log.d(TAG, "MainActivity - 자전거 클릭")
 
                 bottomNavigationIndex = 1
-                bikeFragment = BikeFragment.newInstance()
-                supportFragmentManager.beginTransaction().replace(R.id.info_frame, bikeFragment).commit()
 
                 if (nubijaMarkerList != null) {
                     for (marker in nubijaMarkerList) {
@@ -129,9 +124,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             R.id.menu_bus -> {
                 Log.d(TAG, "MainActivity - 버스 클릭")
 
+                val infoWindow:LinearLayout = findViewById(info_window)
+                val params = infoWindow.layoutParams
+                val anim = TranslateAnimation(0f,0f,0f,params.height.toFloat() * -1)
+                anim.duration = 700
+                anim.fillAfter = true
+                infoWindow.animation = anim
+                infoWindow.visibility = View.GONE
+
                 bottomNavigationIndex = 2
-                busFragment = BusFragment.newInstance()
-                supportFragmentManager.beginTransaction().replace(R.id.info_frame, busFragment).commit()
                 resetNubijaMarkerList()
 
             }
@@ -224,6 +225,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateMapMarker(result: BikeStationResult){
 
         Log.d(TAG, "MainAcitivity - updateMapMarker() called")
+        val infoWindow:LinearLayout = findViewById(info_window)
 
          if (result.stations.isNotEmpty()){
 
@@ -239,19 +241,33 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                  // 마커가 클릭됬을때 마커 색깔 변경
                  marker.setOnClickListener {
                      if (nubijaMarkerClicked) {
+                         Log.d(TAG,"nubijaMarkerClicked =  $nubijaMarkerClicked")
                          for (marker in nubijaMarkerList) {
                              marker.icon = MarkerIcons.GREEN
                          }
 
                          marker.icon = MarkerIcons.YELLOW
+
+
+                         val params = infoWindow.layoutParams
+                         val anim = TranslateAnimation(0f,0f,params.height.toFloat() * -1,0f)
+                         anim.duration = 700
+                         anim.fillAfter = true
+                         infoWindow.animation = anim
+                         infoWindow.visibility = View.VISIBLE
+
+                         //진동 효과
                          val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                         vibrator.vibrate(100)
+                         vibrator.vibrate(50)
                      }
 
                      else {
+                         Log.d(TAG,"nubijaMarkerClicked =  $nubijaMarkerClicked")
                          marker.icon = MarkerIcons.YELLOW
+
+                         //진동 효과
                          val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                         vibrator.vibrate(10)
+                         vibrator.vibrate(50)
                          nubijaMarkerClicked = true
                      }
 
