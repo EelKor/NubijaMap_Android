@@ -1,18 +1,23 @@
 package com.example.nubijaapp
 
+import android.content.Context
 import android.content.Intent
 import android.content.res.AssetManager
+import android.graphics.PointF
+import android.os.*
 import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import com.example.nubijaapp.R.id.menu_bike
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.naver.maps.geometry.Coord
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
 import org.json.JSONObject
+import java.util.concurrent.Executor
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     //프레그먼트 멤버 변수 선언
@@ -23,12 +28,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var locationSource: FusedLocationSource
     private lateinit var naverMap: NaverMap
 
+    //하단 내비게이션 바 인덱스
+    private var bottomNavigationIndex: Int? = 1
+
     //누비자 정류장 정보
     private lateinit var bikeStationResult: BikeStationResult
 
     //누비자 마커 리스트
     private var nubijaMarkerList = ArrayList<Marker>()
-
+    private var nubijaMarkerClicked:Boolean = false
 
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
     private var mBackWait:Long = 0
@@ -37,6 +45,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     //로그 남기기 위해 만듦
         companion object {
             const val TAG: String = "로그"
+
         }
 
 
@@ -94,15 +103,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     //바텀 내비게이션 아이템이 눌러졌을때
-    private val onBottomNavItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener {
+     private val onBottomNavItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener {
         //스위치 문
         // 하단 내비게이션 바 버튼이 클릭 됬을때 실행할 동작
-        val marker = Marker()
-        marker.map = null
-
         when(it.itemId){
-            R.id.menu_bike -> {
+            menu_bike -> {
                 Log.d(TAG, "MainActivity - 자전거 클릭")
+
+                bottomNavigationIndex = 1
                 bikeFragment = BikeFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, bikeFragment).commit()
 
@@ -120,6 +128,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
             R.id.menu_bus -> {
                 Log.d(TAG, "MainActivity - 버스 클릭")
+
+                bottomNavigationIndex = 2
                 busFragment = BusFragment.newInstance()
                 supportFragmentManager.beginTransaction().replace(R.id.info_frame, busFragment).commit()
                 resetNubijaMarkerList()
@@ -128,6 +138,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
             R.id.menu_menu1 -> {
                 Log.d(TAG, "MainActivity - 메뉴1클릭")
+
+                bottomNavigationIndex = 3
                 val menuIntent = Intent(this, MenuActivity::class.java)
                 startActivity(menuIntent)
             }
@@ -165,7 +177,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         uiSettings.isZoomControlEnabled = false
 
         //지도 오버레이 활성화
-        val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
+        val locationOverlay = naverMap.locationOverlay                               // 오버레이 객체 선언
         locationOverlay.isVisible = true                                                            // 오버레이 활성화
 
         this.naverMap = naverMap
@@ -187,15 +199,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val inputStream = assetManager.open("nubija.json")
         val jsonString = inputStream.bufferedReader().use { it.readText() }
 
-        Log.d(TAG, "fetchBikeStaion() - $jsonString")
 
         val jObject = JSONObject(jsonString)
         val jArray = jObject.getJSONArray("TerminalInfo")
 
-        Log.d(TAG, "fetchBikeStation() - $jArray")
         for (i in 0 until jArray.length()) {
 
-            Log.d(TAG, "fetchBikeStation() - JSON Parsing $i")
             val obj = jArray.getJSONObject(i)
             val name = obj.getString("Tmname")
             val lats = obj.getString("Latitude")
@@ -216,7 +225,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         Log.d(TAG, "MainAcitivity - updateMapMarker() called")
 
-        if ( result.stations.size > 0){
+         if (result.stations.isNotEmpty()){
+
 
             Log.d(TAG, "updateMapMarker() - If gate passed")
 
@@ -225,6 +235,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                  marker.position = LatLng(bikestations.lat, bikestations.lng)
                  marker.icon = MarkerIcons.GREEN
                  marker.map = naverMap
+
+                 // 마커가 클릭됬을때 마커 색깔 변경
+                 marker.setOnClickListener {
+                     if (nubijaMarkerClicked) {
+                         for (marker in nubijaMarkerList) {
+                             marker.icon = MarkerIcons.GREEN
+                         }
+
+                         marker.icon = MarkerIcons.YELLOW
+                         val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                         vibrator.vibrate(100)
+                     }
+
+                     else {
+                         marker.icon = MarkerIcons.YELLOW
+                         val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                         vibrator.vibrate(10)
+                         nubijaMarkerClicked = true
+                     }
+
+
+                     false
+                 }
+
                  nubijaMarkerList.add(marker)
              }
         }
@@ -234,10 +268,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun resetNubijaMarkerList(){
         if (nubijaMarkerList != null && nubijaMarkerList.size > 0) {
             for (marker in nubijaMarkerList) {
+                marker.icon = MarkerIcons.GREEN
                 marker.map = null
             }
         }
-
     }
+
+
+
 }
 

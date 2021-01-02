@@ -3,6 +3,7 @@
     package="com.example.nubijaapp">
     <!-- 네이버 지도 위치 정보 수집 동의 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
