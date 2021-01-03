@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
 import android.view.View
 import android.view.animation.TranslateAnimation
+import android.webkit.WebView
 import android.widget.LinearLayout
 import android.widget.Toast
 import com.example.nubijaapp.R.id.info_window
@@ -56,6 +57,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //레이아웃과 연결
         setContentView(R.layout.activity_main)
         Log.d(TAG, "MainActivity - OnCreate() called")
+
+        val infoWindow:LinearLayout = findViewById(info_window)
+        infoWindow.visibility = View.GONE
 
         //FindViewById 로 Id값을 불러온후
         //Id값의 옵션에 접근
@@ -127,7 +131,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 val infoWindow:LinearLayout = findViewById(info_window)
                 val params = infoWindow.layoutParams
                 val anim = TranslateAnimation(0f,0f,0f,params.height.toFloat() * -1)
-                anim.duration = 700
+                anim.duration = 500
                 anim.fillAfter = true
                 infoWindow.animation = anim
                 infoWindow.visibility = View.GONE
@@ -241,7 +245,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                  // 마커가 클릭됬을때 마커 색깔 변경
                  marker.setOnClickListener {
                      if (nubijaMarkerClicked) {
-                         Log.d(TAG,"nubijaMarkerClicked =  $nubijaMarkerClicked")
                          for (marker in nubijaMarkerList) {
                              marker.icon = MarkerIcons.GREEN
                          }
@@ -251,8 +254,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                          val params = infoWindow.layoutParams
                          val anim = TranslateAnimation(0f,0f,params.height.toFloat() * -1,0f)
-                         anim.duration = 700
-                         anim.fillAfter = true
+                         anim.duration = 500
+                         anim.fillAfter = false
                          infoWindow.animation = anim
                          infoWindow.visibility = View.VISIBLE
 
