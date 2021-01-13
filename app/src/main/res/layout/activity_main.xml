@@ -15,29 +15,16 @@
     android:layout_above="@id/bottom_nav">
 
 
-    <fragment
+    <fragment xmlns:app="http://schemas.android.com/apk/res-auto"
+
         android:id="@+id/map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:name="com.naver.maps.map.MapFragment"
+        app:navermap_latitude = "35.22773370309257"
+        app:navermap_longitude = "128.6821961402893"
         />
 
-    <LinearLayout
-        android:id="@+id/info_window"
-        android:gravity="center_horizontal"
-        android:layout_gravity="bottom"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:background="@color/white"
-        android:orientation="vertical"
-        >
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:text="123text"/>
-    </LinearLayout>
 
 </FrameLayout>
 

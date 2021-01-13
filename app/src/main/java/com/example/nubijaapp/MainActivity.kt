@@ -6,15 +6,12 @@ import android.content.res.AssetManager
 import android.os.*
 import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
-import android.view.View
-import android.view.animation.TranslateAnimation
-import android.widget.LinearLayout
 import android.widget.Toast
-import com.example.nubijaapp.R.id.info_window
 import com.example.nubijaapp.R.id.menu_bike
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
+import com.naver.maps.map.overlay.InfoWindow
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
 import com.naver.maps.map.util.FusedLocationSource
@@ -36,6 +33,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     //누비자 마커 리스트
     private var nubijaMarkerMap = mutableMapOf<Int, Marker>()
+    private var nubijaInfoWindow = mutableMapOf<Int, InfoWindow>()
 
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
     private var mBackWait:Long = 0
@@ -57,8 +55,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         setContentView(R.layout.activity_main)
         Log.d(TAG, "MainActivity - OnCreate() called")
 
-        val infoWindow:LinearLayout = findViewById(info_window)
-        infoWindow.visibility = View.GONE
 
         //FindViewById 로 Id값을 불러온후
         //Id값의 옵션에 접근
@@ -110,33 +106,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             menu_bike -> {
                 Log.d(TAG, "MainActivity - 자전거 클릭")
 
+                naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, true)
+                naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRAFFIC, false)
+                naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRANSIT, false)
+
                 bottomNavigationIndex = 1
-
-                if (nubijaMarkerMap.isEmpty()) {
-                    for (marker in nubijaMarkerMap.values) {
-                        marker.map = naverMap
-                    }
-                }
-
-                else {
-                    fetchBikeStation()
-                }
+                visualMarker()
 
             }
 
             R.id.menu_bus -> {
                 Log.d(TAG, "MainActivity - 버스 클릭")
 
-                val infoWindow:LinearLayout = findViewById(info_window)
-                val params = infoWindow.layoutParams
-                val anim = TranslateAnimation(0f,0f,0f,params.height.toFloat() * -1)
-                anim.duration = 500
-                anim.fillAfter = true
-                infoWindow.animation = anim
-                infoWindow.visibility = View.GONE
-
+                naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, false)
+                naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRAFFIC, true)
+                naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRANSIT, true)
                 bottomNavigationIndex = 2
-                resetNubijaMarkerList()
+
+                clearMarker()
 
             }
 
@@ -175,6 +162,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(naverMap: NaverMap) {
         Log.d(TAG, "MainActivity : onMapReady() called")
 
+        //지도 옵션 지정 - 자전거 지도
+        naverMap.mapType = NaverMap.MapType.Basic
+        naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, true)
+
         //지도 UI 세팅
         val uiSettings = naverMap.uiSettings
         uiSettings.isLocationButtonEnabled = true
@@ -183,11 +174,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //지도 오버레이 활성화
         val locationOverlay = naverMap.locationOverlay                               // 오버레이 객체 선언
         locationOverlay.isVisible = true                                                            // 오버레이 활성화
-
         this.naverMap = naverMap
         naverMap.locationSource = locationSource
 
-        locationOverlay.position =  LatLng(35.22773370309257, 128.6821961402893)
         fetchBikeStation()
 
 
@@ -229,16 +218,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateMapMarker(result: BikeStationResult){
 
         Log.d(TAG, "MainAcitivity - updateMapMarker() called")
-        val infoWindow:LinearLayout = findViewById(info_window)
 
          if (result.stations.isNotEmpty()){
-
-            Log.d(TAG, "updateMapMarker() - If gate passed")
-
+            resetNubijaMarkerList()
 
              // 반복문으로 마커 생성
              for (bikestations in result.stations)  {
+
                  val marker = Marker()
+                 val infoWindow = InfoWindow()
+
                  marker.position = LatLng(bikestations.lat, bikestations.lng)
                  marker.icon = MarkerIcons.GREEN
                  marker.map = naverMap
@@ -247,34 +236,39 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                  marker.tag = bikestations.tmid
                  marker.onClickListener = listener
                  nubijaMarkerMap.put(bikestations.tmid , marker)
+                 nubijaInfoWindow.put(bikestations.tmid, infoWindow)
 
              }
         }
 
     }
 
+
     // 마커가 클릭되면 호출 됨
     private val listener = Overlay.OnClickListener {overlay ->
-        // 마커 색깔 초기화
         for (marker in nubijaMarkerMap.values) {
             marker.icon = MarkerIcons.GREEN
         }
 
-        // 마커 가 존재하면 실행됨
-        if (nubijaMarkerMap.containsKey(overlay.tag)) {
-            // 강제 NotNull 처리, 클릭된 마커 색깔 변경
-            val marker = nubijaMarkerMap[overlay.tag]!!
-            marker.icon = MarkerIcons.YELLOW
+        // 강제 NotNull 처리, 클릭된 마커 색깔 변경
+        val marker = overlay as Marker
+        val infoWindow = nubijaInfoWindow[overlay.tag]!!
+        marker.icon = MarkerIcons.YELLOW
 
-            
-
-            // 진동 효과
-            val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-            vibrator.vibrate(50)
+        // infoWindow 띄우기
+        if (marker.infoWindow != null) {
+            infoWindow.close()
+        } else {
+            infoWindow.open(marker)
         }
 
+        // 진동 효과
+        val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        vibrator.vibrate(50)
 
-        Toast.makeText(this, "마커 ${overlay.tag} 클릭됨", Toast.LENGTH_SHORT)
+
+
+        Toast.makeText(this, "마커 ${marker.tag} 클릭됨", Toast.LENGTH_SHORT)
                 .show()
         false
 
@@ -286,6 +280,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             for (marker in nubijaMarkerMap.values) {
                 marker.icon = MarkerIcons.GREEN
                 marker.map = null
+            }
+        }
+    }
+
+
+    // 지도에서 마커 없앨때 사용
+    private fun clearMarker() {
+        for (marker in nubijaMarkerMap.values) {
+            marker.icon = MarkerIcons.GREEN
+            marker.map = null
+        }
+    }
+
+
+    // 마커 재생성 때 사용
+    private fun visualMarker() {
+        if (nubijaMarkerMap.isEmpty()) {
+            fetchBikeStation()
+        }
+
+        else {
+            for (marker in nubijaMarkerMap.values) {
+                marker.map = naverMap
             }
         }
     }
