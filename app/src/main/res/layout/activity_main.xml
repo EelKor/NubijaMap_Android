@@ -5,30 +5,31 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
     tools:context=".MainActivity">
 
-    <FrameLayout
-        android:id="@+id/info_frame"
+<FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_alignParentTop="true"
+    android:layout_above="@id/bottom_nav">
 
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
 
-        />
+    <fragment xmlns:app="http://schemas.android.com/apk/res-auto"
 
-    <FrameLayout
         android:id="@+id/map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/info_frame"
-        android:layout_above="@id/bottom_nav"
-        android:layout_centerHorizontal="true"
-        android:background="@color/design_default_color_on_primary"
-
+        android:name="com.naver.maps.map.MapFragment"
+        app:navermap_latitude = "35.22773370309257"
+        app:navermap_longitude = "128.6821961402893"
         />
 
-<com.google.android.material.bottomnavigation.BottomNavigationView
+
+</FrameLayout>
+
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
     android:id="@+id/bottom_nav"
     
     android:layout_width="match_parent"
