@@ -3,16 +3,19 @@ package com.example.nubijaapp
 import android.content.Context
 import android.content.Intent
 import android.content.res.AssetManager
-import android.graphics.PointF
-import android.os.*
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.os.Vibrator
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.example.nubijaapp.R.id.info
 import com.example.nubijaapp.R.id.menu_bike
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.naver.maps.geometry.LatLng
-import com.naver.maps.map.*
+import com.naver.maps.map.LocationTrackingMode
+import com.naver.maps.map.MapFragment
+import com.naver.maps.map.NaverMap
+import com.naver.maps.map.OnMapReadyCallback
 import com.naver.maps.map.overlay.InfoWindow
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
@@ -35,6 +38,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     //누비자 마커 리스트
     private var nubijaMarkerMap = mutableMapOf<Int, Marker>()
+    private val infoWindow = InfoWindow()
 
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
     private var mBackWait:Long = 0
@@ -230,7 +234,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
              for (bikestations in result.stations)  {
 
                  val marker = Marker()
-                 val infoWindow = InfoWindow()
 
                  marker.position = LatLng(bikestations.lat, bikestations.lng)
                  marker.icon = MarkerIcons.GREEN
@@ -242,6 +245,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                  nubijaMarkerMap.put(bikestations.tmid , marker)
 
              }
+             //InfoWindow 내용구성 함수 실행
+             infoWindowAdapter()
+
         }
 
     }
@@ -250,45 +256,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     // 마커가 클릭되면 호출 됨
     private val listener = Overlay.OnClickListener {overlay ->
 
-        for (marker in nubijaMarkerMap.values) {
-            if (marker.hasInfoWindow()) {
-                val infoWindow = marker.infoWindow!!
-                infoWindow.close()
-            }
-
-            marker.icon = MarkerIcons.GREEN
-        }
-
-
-        // 강제 NotNull 처리, 클릭된 마커 색깔 변경
-        val marker = overlay as Marker
-
-        if (marker.hasInfoWindow()) {
-            val infoWindow = marker.infoWindow!!
-            infoWindow.open(marker)
-            marker.icon = MarkerIcons.YELLOW
-        }
-
-        else {
-            val infoWindow = InfoWindow()
-            infoWindow.open(marker)
-            marker.icon = MarkerIcons.YELLOW
-        }
-
-
-
         // 진동 효과
         val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         vibrator.vibrate(50)
 
+        // 마커 초기화
+        for (marker in nubijaMarkerMap.values) {
+            marker.icon = MarkerIcons.GREEN
+        }
 
+        val marker = overlay as Marker
+        marker.icon = MarkerIcons.YELLOW
+        infoWindow.open(marker)
 
-        Toast.makeText(this, "마커 ${marker.tag} 클릭됨", Toast.LENGTH_SHORT)
-                .show()
-        false
+        true
 
     }
-
 
 
 
@@ -322,6 +305,26 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 marker.map = naverMap
             }
         }
+    }
+
+    //InfoWindow 내용 구성
+    private fun infoWindowAdapter() {
+        // InfoWindow 설정
+        infoWindow.adapter = object : InfoWindow.DefaultTextAdapter(applicationContext) {
+            override fun getText(infoWindow: InfoWindow): CharSequence {
+               val tag = infoWindow.marker?.tag.toString()
+                val result = bikeStationResult.stations
+
+                for (station in result) {
+                    if (tag.toInt() == station.tmid) {
+                        return station.name
+                    }
+                }
+                return "load fail"
+            }
+
+        }
+
     }
 
 
