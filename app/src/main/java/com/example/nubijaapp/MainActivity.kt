@@ -263,18 +263,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // 마커 초기화
         for (marker in nubijaMarkerMap.values) {
-            marker.icon = MarkerIcons.GREEN
+            marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_green)
         }
 
         val marker = overlay as Marker
 
         //Info Window 가 존재 하면 닫고, 존재 하지 않으면 열기
         if (marker.hasInfoWindow()) {
-            marker.icon = MarkerIcons.GREEN
+            marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_green)
             infoWindow.close()
         }
         else {
-            marker.icon = MarkerIcons.YELLOW
+            marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_blue)
             infoWindow.open(marker)
         }
 
@@ -287,7 +287,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun resetNubijaMarkerList(){
         if (nubijaMarkerMap.isEmpty() ) {
             for (marker in nubijaMarkerMap.values) {
-                marker.icon = MarkerIcons.GREEN
+                marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_green)
                 marker.map = null
             }
         }
@@ -297,7 +297,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     // 지도에서 마커 없앨때 사용
     private fun clearMarker() {
         for (marker in nubijaMarkerMap.values) {
-            marker.icon = MarkerIcons.GREEN
+            marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_green)
             marker.map = null
         }
     }
