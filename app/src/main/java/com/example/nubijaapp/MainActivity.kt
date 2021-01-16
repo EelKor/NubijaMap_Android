@@ -267,6 +267,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val marker = overlay as Marker
 
+        //Info Window 가 존재 하면 닫고, 존재 하지 않으면 열기
         if (marker.hasInfoWindow()) {
             marker.icon = MarkerIcons.GREEN
             infoWindow.close()
@@ -275,7 +276,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             marker.icon = MarkerIcons.YELLOW
             infoWindow.open(marker)
         }
-        
+
         true
 
     }
