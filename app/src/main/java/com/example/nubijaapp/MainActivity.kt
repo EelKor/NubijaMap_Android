@@ -266,9 +266,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         val marker = overlay as Marker
-        marker.icon = MarkerIcons.YELLOW
-        infoWindow.open(marker)
 
+        if (marker.hasInfoWindow()) {
+            marker.icon = MarkerIcons.GREEN
+            infoWindow.close()
+        }
+        else {
+            marker.icon = MarkerIcons.YELLOW
+            infoWindow.open(marker)
+        }
+        
         true
 
     }
