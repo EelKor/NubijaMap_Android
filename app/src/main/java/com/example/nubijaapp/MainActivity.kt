@@ -19,6 +19,7 @@ import com.naver.maps.map.OnMapReadyCallback
 import com.naver.maps.map.overlay.InfoWindow
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
+import com.naver.maps.map.overlay.OverlayImage
 import com.naver.maps.map.util.FusedLocationSource
 import com.naver.maps.map.util.MarkerIcons
 import org.json.JSONObject
@@ -236,7 +237,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                  val marker = Marker()
 
                  marker.position = LatLng(bikestations.lat, bikestations.lng)
-                 marker.icon = MarkerIcons.GREEN
+                 marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_green)
                  marker.map = naverMap
 
                  // 마커 테그로 고유의 ID 부여

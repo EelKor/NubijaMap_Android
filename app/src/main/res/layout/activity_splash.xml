@@ -11,7 +11,7 @@
         android:layout_width="203dp"
         android:layout_height="251dp"
         android:layout_marginTop="132dp"
-        android:src="@drawable/bicycle"
+        android:src="@drawable/logo"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
