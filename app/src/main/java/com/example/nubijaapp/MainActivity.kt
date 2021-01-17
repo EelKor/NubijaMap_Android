@@ -198,7 +198,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         Log.d(TAG, "MainActivity - fetchBikeStation() called")
 
         val assetManager:AssetManager = resources.assets
-        val inputStream = assetManager.open("nubija.json")
+        val inputStream = assetManager.open("nubijaData.json")
         val jsonString = inputStream.bufferedReader().use { it.readText() }
 
 
