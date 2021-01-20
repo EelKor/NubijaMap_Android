@@ -8,7 +8,6 @@ import android.os.Vibrator
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.nubijaapp.R.id.info
 import com.example.nubijaapp.R.id.menu_bike
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.naver.maps.geometry.LatLng
@@ -21,7 +20,6 @@ import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
 import com.naver.maps.map.overlay.OverlayImage
 import com.naver.maps.map.util.FusedLocationSource
-import com.naver.maps.map.util.MarkerIcons
 import org.json.JSONObject
 
 
@@ -64,7 +62,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //FindViewById 로 Id값을 불러온후
         //Id값의 옵션에 접근
-        val bottom_nav : com.google.android.material.bottomnavigation.BottomNavigationView = findViewById(R.id.bottom_nav)
+        val bottom_nav : BottomNavigationView = findViewById(R.id.bottom_nav)
         bottom_nav.setOnNavigationItemSelectedListener(onBottomNavItemSelectedListener)
 
 
@@ -237,7 +235,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                  val marker = Marker()
 
                  marker.position = LatLng(bikestations.lat, bikestations.lng)
-                 marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_green)
+                 marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
                  marker.map = naverMap
 
                  // 마커 테그로 고유의 ID 부여
@@ -263,18 +261,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // 마커 초기화
         for (marker in nubijaMarkerMap.values) {
-            marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_green)
+            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
         }
 
         val marker = overlay as Marker
 
         //Info Window 가 존재 하면 닫고, 존재 하지 않으면 열기
         if (marker.hasInfoWindow()) {
-            marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_green)
+            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
             infoWindow.close()
         }
         else {
-            marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_blue)
+            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
             infoWindow.open(marker)
         }
 
@@ -287,7 +285,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun resetNubijaMarkerList(){
         if (nubijaMarkerMap.isEmpty() ) {
             for (marker in nubijaMarkerMap.values) {
-                marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_green)
+                marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
                 marker.map = null
             }
         }
@@ -297,7 +295,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     // 지도에서 마커 없앨때 사용
     private fun clearMarker() {
         for (marker in nubijaMarkerMap.values) {
-            marker.icon = OverlayImage.fromResource(R.drawable.ic_marker_green)
+            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
             marker.map = null
         }
     }
@@ -326,7 +324,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 for (station in result) {
                     if (tag.toInt() == station.tmid) {
-                        return station.name
+                        return "${station.name}\n대여가능:0\n반납가능:0"
                     }
                 }
                 return "load fail"
