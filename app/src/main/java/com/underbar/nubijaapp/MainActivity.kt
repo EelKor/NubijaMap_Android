@@ -1,14 +1,13 @@
-package com.example.nubijaapp
+package com.underbar.nubijaapp
 
 import android.content.Context
 import android.content.Intent
 import android.content.res.AssetManager
 import android.os.Bundle
 import android.os.Vibrator
-import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.nubijaapp.R.id.menu_bike
+import com.underbar.nubijaapp.R.id.menu_bike
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.LocationTrackingMode
@@ -20,6 +19,8 @@ import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
 import com.naver.maps.map.overlay.OverlayImage
 import com.naver.maps.map.util.FusedLocationSource
+import com.network.nubija.BikeStation
+import com.network.nubija.BikeStationResult
 import org.json.JSONObject
 
 
@@ -43,13 +44,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var mBackWait:Long = 0
 
 
-    //로그 남기기 위해 만듦
-        companion object {
-            const val TAG: String = "로그"
-
-        }
-
-
 
     //메모리에 올라갔을때
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +51,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //레이아웃과 연결
         setContentView(R.layout.activity_main)
-        Log.d(TAG, "MainActivity - OnCreate() called")
 
 
         //FindViewById 로 Id값을 불러온후
@@ -87,7 +80,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
 
-        Log.d(TAG, "MainActivity : onRequestPermissionResult() called ")
 
         if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults))  {
             if (locationSource.isActivated) {   //권한 거부됨
@@ -108,7 +100,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // 하단 내비게이션 바 버튼이 클릭 됬을때 실행할 동작
         when(it.itemId){
             menu_bike -> {
-                Log.d(TAG, "MainActivity - 자전거 클릭")
 
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, true)
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRAFFIC, false)
@@ -120,7 +111,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             R.id.menu_bus -> {
-                Log.d(TAG, "MainActivity - 버스 클릭")
 
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, false)
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRAFFIC, true)
@@ -134,7 +124,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             R.id.menu_menu1 -> {
-                Log.d(TAG, "MainActivity - 메뉴1클릭")
 
                 bottomNavigationIndex = 3
                 val menuIntent = Intent(this, MenuActivity::class.java)
@@ -152,21 +141,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //뒤로가기 2번 누를때 종료 기능 구현
         if (System.currentTimeMillis() - mBackWait >= 2000){
 
-            //디버깅을 위해 로그 삽입
-            Log.d(TAG, "MainActivity - onBackPressed() called")
             mBackWait = System.currentTimeMillis()
             Toast.makeText(this, "종료하시려면 뒤로가기 버튼을 한번 더 눌러주세요.", Toast.LENGTH_SHORT).show()
         }
 
         else{
-            Log.d(TAG,"MainActivity - 프로그램 종료")
             finish()
         }
     }
 
     // mapFragment.getMapAsync(this) 에 의해 호출됨
     override fun onMapReady(naverMap: NaverMap) {
-        Log.d(TAG, "MainActivity : onMapReady() called")
 
         //지도 옵션 지정 - 자전거 지도
         naverMap.mapType = NaverMap.MapType.Basic
@@ -183,7 +168,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         this.naverMap = naverMap
         naverMap.locationSource = locationSource
 
-
+        //InfoWindow 내용구성 함수 실행
+        infoWindowAdapter()
         fetchBikeStation()
 
 
@@ -193,27 +179,34 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun fetchBikeStation()  {
         val bikeStationlists = ArrayList<BikeStation>()
 
-        Log.d(TAG, "MainActivity - fetchBikeStation() called")
-
-        val assetManager:AssetManager = resources.assets
-        val inputStream = assetManager.open("nubijaData.json")
-        val jsonString = inputStream.bufferedReader().use { it.readText() }
-
-
-        val jObject = JSONObject(jsonString)
-        val jArray = jObject.getJSONArray("TerminalInfo")
-
-        for (i in 0 until jArray.length()) {
-
-            val obj = jArray.getJSONObject(i)
-            val name = obj.getString("Tmname")
-            val lats = obj.getString("Latitude")
-            val lngs = obj.getString("Longitude")
-            val vno = obj.getString("Vno")
-
-            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt()))
+        //서버와 통신
+        if (false) {
 
         }
+
+        else {
+            // 서버와 통신 실패시
+            val assetManager:AssetManager = resources.assets
+            val inputStream = assetManager.open("nubijaData.json")
+            val jsonString = inputStream.bufferedReader().use { it.readText() }
+
+
+            val jObject = JSONObject(jsonString)
+            val jArray = jObject.getJSONArray("TerminalInfo")
+
+            for (i in 0 until jArray.length()) {
+
+                val obj = jArray.getJSONObject(i)
+                val name = obj.getString("Tmname")
+                val lats = obj.getString("Latitude")
+                val lngs = obj.getString("Longitude")
+                val vno = obj.getString("Vno")
+
+                bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(),0,0))
+
+            }
+        }
+
         bikeStationResult = BikeStationResult(bikeStationlists)
         updateMapMarker(bikeStationResult)
 
@@ -224,7 +217,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     // 마커 생성 메소드 - fetchBikeStation 에 의해 호출됨
     private fun updateMapMarker(result: BikeStationResult){
 
-        Log.d(TAG, "MainAcitivity - updateMapMarker() called")
 
          if (result.stations.isNotEmpty()){
             resetNubijaMarkerList()
@@ -244,8 +236,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                  nubijaMarkerMap.put(bikestations.tmid , marker)
 
              }
-             //InfoWindow 내용구성 함수 실행
-             infoWindowAdapter()
 
         }
 
