@@ -1,4 +1,4 @@
-package com.example.nubijaapp
+package com.underbar.nubijaapp
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
