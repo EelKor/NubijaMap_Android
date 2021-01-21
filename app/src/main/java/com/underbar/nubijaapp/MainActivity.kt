@@ -26,7 +26,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
     //위치정보 멤버 변수 선언
     private lateinit var locationSource: FusedLocationSource
@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         naverMap.locationSource = locationSource
 
         //InfoWindow 내용구성 함수 실행
-        infoWindowAdapter()
+        infoWindowSetting()
         fetchBikeStation()
 
 
@@ -311,8 +311,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     //InfoWindow 내용 구성
-    private fun infoWindowAdapter() {
+    private fun infoWindowSetting() {
         // InfoWindow 설정
+
+        naverMap.setOnMapClickListener { pointF, latLng ->
+            infoWindow.close()
+        }
         infoWindow.adapter = object : InfoWindow.DefaultTextAdapter(applicationContext) {
             override fun getText(infoWindow: InfoWindow): CharSequence {
                val tag = infoWindow.marker?.tag.toString()
@@ -320,7 +324,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 for (station in result) {
                     if (tag.toInt() == station.tmid) {
-                        return "${station.name}\n대여가능:0\n반납가능:0"
+                        return "${station.name}\n반납가능:${station.empty}\n대여가능:${station.park}"
                     }
                 }
                 return "load fail"
