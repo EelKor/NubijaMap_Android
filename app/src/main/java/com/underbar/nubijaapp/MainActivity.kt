@@ -22,6 +22,8 @@ import com.naver.maps.map.util.FusedLocationSource
 import com.network.nubija.BikeStation
 import com.network.nubija.BikeStationResult
 import org.json.JSONObject
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -181,6 +183,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //서버와 통신
         if (false) {
+            val retrofit = Retrofit.Builder()
+                .baseUrl(" http://api.nubija.com:1577/ubike/nubijaInfoApi.do?apikey=aMEEZeshtbWikWmkRmXD")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
 
         }
 
