@@ -381,6 +381,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
             if (infoWindow.isAdded) {
                 val marker = infoWindow.marker!!
                 marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+
+                // 진동 효과
+                val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                vibrator.vibrate(50)
+                
                 infoWindow.close()
             }
         }
