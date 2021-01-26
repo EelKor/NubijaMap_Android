@@ -10,7 +10,7 @@ android {
         enabled = true
     }
     defaultConfig {
-        applicationId "com.example.nubijaapp"
+        applicationId "com.underbar.nubijaapp"
         minSdkVersion 16
         targetSdkVersion 30
         versionCode 1
@@ -48,7 +48,6 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.squareup.retrofit2:converter-gson:2.6.2'
     implementation 'com.squareup.retrofit2:retrofit:2.6.0'
-    implementation 'com.android.volley:dc-volley:1.1.0'
 
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
