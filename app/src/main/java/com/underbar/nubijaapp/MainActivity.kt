@@ -36,7 +36,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
     //위치정보 멤버 변수 선언
     private lateinit var locationSource: FusedLocationSource
-    private lateinit var locationCallback: LocationCallback
     private lateinit var naverMap: NaverMap
 
     //하단 내비게이션 바 인덱스
@@ -51,6 +50,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
     private var mBackWait:Long = 0
+
+    companion object    {
+        private const val LOCATION_PERMISSION_CODE = 1000
+    }
 
 
 
@@ -84,17 +87,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
         //LOCATION_PERMISSION_CODE
         locationSource =
-                FusedLocationSource(this, 1000)
-
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
-                locationResult ?: return
-                for (location in locationResult.locations){
-
-                    Log.d("로그", "${location}")
-                }
-            }
-        }
+                FusedLocationSource(this, LOCATION_PERMISSION_CODE)
 
 
 
@@ -188,49 +181,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
         //지도 UI 세팅
         val uiSettings = naverMap.uiSettings
-        uiSettings.isLocationButtonEnabled = false
+        uiSettings.isLocationButtonEnabled = true
         uiSettings.isZoomControlEnabled = false
+
+        //지도 위치 표시
+        naverMap.locationSource = locationSource
+        naverMap.locationTrackingMode = LocationTrackingMode.Follow
+
 
         //지도 오버레이 활성화
         val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
         locationOverlay.isVisible = true                                                            // 오버레이 활성화
-        //naverMap.locationSource = locationSource
-
-        // 앱 실행시 초기 위치 불러오기
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        // 위치 정보 엑세스 권한 이 있는지 확인
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1000)
-            }
-
-            else    {
-                Toast.makeText(this, "위치 허가를 받을 수 없습니다", Toast.LENGTH_LONG).show()
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1000)
-            }
-        }
-
-        else    {
-            fusedLocationClient.lastLocation
-                    .addOnSuccessListener { location ->
-                        if (location == null) {
-                            Toast.makeText(this, "위치 옵션을 켜주세요", Toast.LENGTH_LONG).show()
-                        } else {
-                            locationOverlay.position = LatLng(location.latitude, location.longitude)
-                            val cameraUpdate = CameraUpdate.scrollTo(LatLng(location.latitude, location.longitude))
-                            naverMap.moveCamera(cameraUpdate)
-                        }
-                    }
-                    .addOnFailureListener {
-                        Toast.makeText(this, "위치 정보를 가져오는데 실패 했습니다\n${it.message}", Toast.LENGTH_LONG).show()
-                        it.printStackTrace()
-                    }
-        }
-
-
 
 
         //InfoWindow 내용구성 함수 실행
