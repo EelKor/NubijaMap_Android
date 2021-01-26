@@ -25,6 +25,7 @@ import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
 import com.naver.maps.map.overlay.OverlayImage
 import com.naver.maps.map.util.FusedLocationSource
+import com.naver.maps.map.util.MarkerIcons
 import com.underbar.nubijaapp.R.id.menu_bike
 import org.json.JSONObject
 import retrofit2.Retrofit
@@ -376,7 +377,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
         // InfoWindow 설정
 
         naverMap.setOnMapClickListener { pointF, latLng ->
-            infoWindow.close()
+
+            if (infoWindow.isAdded) {
+                val marker = infoWindow.marker!!
+                marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                infoWindow.close()
+            }
         }
         infoWindow.adapter = object : InfoWindow.DefaultTextAdapter(applicationContext) {
             override fun getText(infoWindow: InfoWindow): CharSequence {
