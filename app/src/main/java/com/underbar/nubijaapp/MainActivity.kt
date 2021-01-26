@@ -2,16 +2,18 @@ package com.underbar.nubijaapp
 
 import android.Manifest
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.AssetManager
-import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Vibrator
+import android.provider.Settings
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.data.nubija.BikeStation
@@ -44,7 +46,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     //위치정보 멤버 변수 선언
     private lateinit var locationSource: FusedLocationSource
     private lateinit var naverMap: NaverMap
-    private var initLocation: Location? = null
 
     lateinit var providerClient: FusedLocationProviderClient
     lateinit var googleApiClient: GoogleApiClient
@@ -122,6 +123,42 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
     private val permissionListener = object : PermissionListener {
         override fun onPermissionGranted() {
+
+            val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+            // 권한은 허용 되었으나 위치 설정이 꺼저있을때 위치 설정 페이지로 이동
+            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))  {
+
+                // 팝업 메시지 구현
+                val builder = AlertDialog.Builder(this@MainActivity)
+                builder.setTitle("앗...!")
+                builder.setMessage("위치 설정이 꺼져 있어요ㅠ\n원활한 사용을 위해 위치 설정을 켜주세요")
+                builder.setPositiveButton(
+                        "설정",
+                        DialogInterface.OnClickListener { dialog, which ->
+                            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                            intent.addCategory(Intent.CATEGORY_DEFAULT)
+                            startActivity(intent)
+                        })
+                builder.setNegativeButton(
+                        "아니오",
+                        DialogInterface.OnClickListener{ dialog, which ->
+                            Toast.makeText(this@MainActivity, "서비스 이용을 위해 위치 설정을 켜주세요", Toast.LENGTH_LONG).show()
+
+                            //네이버 지도 UI 세팅
+                            val uiSettings = naverMap.uiSettings
+                            uiSettings.isLocationButtonEnabled = false
+                            uiSettings.isZoomControlEnabled = false
+
+                            //지도 오버레이 활성화
+                            val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
+                            locationOverlay.isVisible = false                                                            // 오버레이 활성화
+                        })
+
+                builder.show()
+
+            }
+
 
         }
 
@@ -270,14 +307,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
         //지도 위치 표시
         naverMap.locationSource = locationSource
-        naverMap.locationTrackingMode = LocationTrackingMode.Follow
-
-        if (initLocation != null)   {
-            val cameraUpdate = CameraUpdate.scrollTo(LatLng(initLocation!!.latitude, initLocation!!.longitude))
-            naverMap.moveCamera(cameraUpdate)
-        }
-
-
 
 
         //지도 오버레이 활성화
