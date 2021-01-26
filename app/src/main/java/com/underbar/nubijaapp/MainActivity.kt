@@ -5,18 +5,24 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.AssetManager
+import android.location.Location
+import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Vibrator
-import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.data.nubija.BikeStation
 import com.data.nubija.BikeStationResult
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationResult
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.gun0912.tedpermission.PermissionListener
+import com.gun0912.tedpermission.TedPermission
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.geometry.LatLngBounds
 import com.naver.maps.map.*
@@ -25,18 +31,23 @@ import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
 import com.naver.maps.map.overlay.OverlayImage
 import com.naver.maps.map.util.FusedLocationSource
-import com.naver.maps.map.util.MarkerIcons
 import com.underbar.nubijaapp.R.id.menu_bike
 import org.json.JSONObject
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
+@Suppress("DEPRECATION")
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
+                        GoogleApiClient.OnConnectionFailedListener{
 
     //위치정보 멤버 변수 선언
     private lateinit var locationSource: FusedLocationSource
     private lateinit var naverMap: NaverMap
+    private var initLocation: Location? = null
+
+    lateinit var providerClient: FusedLocationProviderClient
+    lateinit var googleApiClient: GoogleApiClient
 
     //하단 내비게이션 바 인덱스
     private var bottomNavigationIndex: Int? = 1
@@ -59,6 +70,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
 
     //메모리에 올라갔을때
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -89,9 +101,81 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
         locationSource =
                 FusedLocationSource(this, LOCATION_PERMISSION_CODE)
 
+        TedPermission.with(this)
+                .setPermissionListener(permissionListener)
+                .setRationaleConfirmText("원활한 사용을 위해 위치 권한이 필요합니다")
+                .setDeniedMessage("위치 정보 이용 거절됨")
+                .setPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
+                .check()
+
+        googleApiClient = GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build()
+
+        providerClient = LocationServices.getFusedLocationProviderClient(this)
+        googleApiClient.connect()
 
 
     }
+
+    private val permissionListener = object : PermissionListener {
+        override fun onPermissionGranted() {
+
+        }
+
+        override fun onPermissionDenied(deniedPermissions: ArrayList<String>?) {
+            Toast.makeText(this@MainActivity, "위치 권한 거부됨", Toast.LENGTH_SHORT).show()
+            naverMap.locationTrackingMode = LocationTrackingMode.None
+        }
+    }
+
+
+    /**
+     * 위치 정보 제공자가 사용 가능 상태가 되었을때 호출
+     */
+    override fun onConnected(bundle: Bundle?) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+        providerClient.lastLocation.addOnSuccessListener {
+            it?.let {
+                val locationOverlay = naverMap.locationOverlay
+                locationOverlay.position = LatLng(it.latitude, it.longitude)
+
+                val cameraUpdate = CameraUpdate.scrollTo(LatLng(it.latitude, it.longitude))
+                naverMap.moveCamera(cameraUpdate)
+
+            }
+        }
+    }
+
+    /**
+     * 함수와 사용 불가능 상태가 되었을 때 호출
+     */
+    override fun onConnectionSuspended(p0: Int) {
+        naverMap.locationTrackingMode = LocationTrackingMode.None
+        Toast.makeText(this, "위치 정보를 얻는데 실패 했습니다", Toast.LENGTH_LONG).show()
+    }
+
+    /**
+     * 위치 정보 제공자를 얻지 못할때 호출
+     */
+    override fun onConnectionFailed(p0: ConnectionResult) {
+        naverMap.locationTrackingMode = LocationTrackingMode.None
+        Toast.makeText(this, "위치 정보를 얻는데 실패 했습니다", Toast.LENGTH_LONG).show()
+    }
+
+
+
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
 
@@ -187,6 +271,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
         //지도 위치 표시
         naverMap.locationSource = locationSource
         naverMap.locationTrackingMode = LocationTrackingMode.Follow
+
+        if (initLocation != null)   {
+            val cameraUpdate = CameraUpdate.scrollTo(LatLng(initLocation!!.latitude, initLocation!!.longitude))
+            naverMap.moveCamera(cameraUpdate)
+        }
+
+
 
 
         //지도 오버레이 활성화
