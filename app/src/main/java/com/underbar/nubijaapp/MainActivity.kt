@@ -1,32 +1,42 @@
-package com.example.nubijaapp
+package com.underbar.nubijaapp
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.AssetManager
 import android.os.Bundle
 import android.os.Vibrator
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.nubijaapp.R.id.menu_bike
+import androidx.core.app.ActivityCompat
+import com.data.nubija.BikeStation
+import com.data.nubija.BikeStationResult
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.naver.maps.geometry.LatLng
-import com.naver.maps.map.LocationTrackingMode
-import com.naver.maps.map.MapFragment
-import com.naver.maps.map.NaverMap
-import com.naver.maps.map.OnMapReadyCallback
+import com.naver.maps.geometry.LatLngBounds
+import com.naver.maps.map.*
 import com.naver.maps.map.overlay.InfoWindow
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
 import com.naver.maps.map.overlay.OverlayImage
 import com.naver.maps.map.util.FusedLocationSource
+import com.naver.maps.map.util.MarkerIcons
+import com.underbar.nubijaapp.R.id.menu_bike
 import org.json.JSONObject
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
     //위치정보 멤버 변수 선언
     private lateinit var locationSource: FusedLocationSource
+    private lateinit var locationCallback: LocationCallback
     private lateinit var naverMap: NaverMap
 
     //하단 내비게이션 바 인덱스
@@ -43,12 +53,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var mBackWait:Long = 0
 
 
-    //로그 남기기 위해 만듦
-        companion object {
-            const val TAG: String = "로그"
-
-        }
-
 
 
     //메모리에 올라갔을때
@@ -57,7 +61,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //레이아웃과 연결
         setContentView(R.layout.activity_main)
-        Log.d(TAG, "MainActivity - OnCreate() called")
 
 
         //FindViewById 로 Id값을 불러온후
@@ -83,11 +86,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         locationSource =
                 FusedLocationSource(this, 1000)
 
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                locationResult ?: return
+                for (location in locationResult.locations){
+
+                    Log.d("로그", "${location}")
+                }
+            }
+        }
+
+
+
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
 
-        Log.d(TAG, "MainActivity : onRequestPermissionResult() called ")
 
         if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults))  {
             if (locationSource.isActivated) {   //권한 거부됨
@@ -108,8 +122,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // 하단 내비게이션 바 버튼이 클릭 됬을때 실행할 동작
         when(it.itemId){
             menu_bike -> {
-                Log.d(TAG, "MainActivity - 자전거 클릭")
 
+                // 자전거 지도로 지도 옵션 변경
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, true)
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRAFFIC, false)
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRANSIT, false)
@@ -120,8 +134,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             R.id.menu_bus -> {
-                Log.d(TAG, "MainActivity - 버스 클릭")
 
+                //교통량 지도로 지도 옵션 변경
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, false)
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRAFFIC, true)
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRANSIT, true)
@@ -129,12 +143,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 Toast.makeText(this, "다음 업데이트를 기다려 주세요~", Toast.LENGTH_SHORT).show()
 
+                // 마커 삭제
                 clearMarker()
 
             }
 
             R.id.menu_menu1 -> {
-                Log.d(TAG, "MainActivity - 메뉴1클릭")
 
                 bottomNavigationIndex = 3
                 val menuIntent = Intent(this, MenuActivity::class.java)
@@ -152,21 +166,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         //뒤로가기 2번 누를때 종료 기능 구현
         if (System.currentTimeMillis() - mBackWait >= 2000){
 
-            //디버깅을 위해 로그 삽입
-            Log.d(TAG, "MainActivity - onBackPressed() called")
             mBackWait = System.currentTimeMillis()
             Toast.makeText(this, "종료하시려면 뒤로가기 버튼을 한번 더 눌러주세요.", Toast.LENGTH_SHORT).show()
         }
 
         else{
-            Log.d(TAG,"MainActivity - 프로그램 종료")
             finish()
         }
     }
 
     // mapFragment.getMapAsync(this) 에 의해 호출됨
     override fun onMapReady(naverMap: NaverMap) {
-        Log.d(TAG, "MainActivity : onMapReady() called")
+
+        this.naverMap = naverMap
+        //지도 범위 제한
+        naverMap.extent = LatLngBounds(LatLng(31.43, 122.37), LatLng(44.35, 132.0))
 
         //지도 옵션 지정 - 자전거 지도
         naverMap.mapType = NaverMap.MapType.Basic
@@ -174,46 +188,93 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //지도 UI 세팅
         val uiSettings = naverMap.uiSettings
-        uiSettings.isLocationButtonEnabled = true
+        uiSettings.isLocationButtonEnabled = false
         uiSettings.isZoomControlEnabled = false
 
         //지도 오버레이 활성화
-        val locationOverlay = naverMap.locationOverlay                               // 오버레이 객체 선언
+        val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
         locationOverlay.isVisible = true                                                            // 오버레이 활성화
-        this.naverMap = naverMap
-        naverMap.locationSource = locationSource
+        //naverMap.locationSource = locationSource
+
+        // 앱 실행시 초기 위치 불러오기
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        // 위치 정보 엑세스 권한 이 있는지 확인
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1000)
+            }
+
+            else    {
+                Toast.makeText(this, "위치 허가를 받을 수 없습니다", Toast.LENGTH_LONG).show()
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1000)
+            }
+        }
+
+        else    {
+            fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location ->
+                        if (location == null) {
+                            Toast.makeText(this, "위치 옵션을 켜주세요", Toast.LENGTH_LONG).show()
+                        } else {
+                            locationOverlay.position = LatLng(location.latitude, location.longitude)
+                            val cameraUpdate = CameraUpdate.scrollTo(LatLng(location.latitude, location.longitude))
+                            naverMap.moveCamera(cameraUpdate)
+                        }
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "위치 정보를 가져오는데 실패 했습니다\n${it.message}", Toast.LENGTH_LONG).show()
+                        it.printStackTrace()
+                    }
+        }
 
 
+
+
+        //InfoWindow 내용구성 함수 실행
+        infoWindowSetting()
         fetchBikeStation()
 
-
-        }
+    }
 
     // 누비자 스테이션 정보 추출 및 마커 생성
     private fun fetchBikeStation()  {
         val bikeStationlists = ArrayList<BikeStation>()
 
-        Log.d(TAG, "MainActivity - fetchBikeStation() called")
-
-        val assetManager:AssetManager = resources.assets
-        val inputStream = assetManager.open("nubijaData.json")
-        val jsonString = inputStream.bufferedReader().use { it.readText() }
-
-
-        val jObject = JSONObject(jsonString)
-        val jArray = jObject.getJSONArray("TerminalInfo")
-
-        for (i in 0 until jArray.length()) {
-
-            val obj = jArray.getJSONObject(i)
-            val name = obj.getString("Tmname")
-            val lats = obj.getString("Latitude")
-            val lngs = obj.getString("Longitude")
-            val vno = obj.getString("Vno")
-
-            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt()))
+        //서버와 통신 
+        if (false) {
+            val retrofit = Retrofit.Builder()
+                .baseUrl(" http://api.nubija.com:1577/ubike/nubijaInfoApi.do?apikey=aMEEZeshtbWikWmkRmXD")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
 
         }
+
+        else {
+            // 서버와 통신 실패시
+            val assetManager:AssetManager = resources.assets
+            val inputStream = assetManager.open("nubijaData.json")
+            val jsonString = inputStream.bufferedReader().use { it.readText() }
+
+
+            val jObject = JSONObject(jsonString)
+            val jArray = jObject.getJSONArray("TerminalInfo")
+
+            for (i in 0 until jArray.length()) {
+
+                val obj = jArray.getJSONObject(i)
+                val name = obj.getString("Tmname")
+                val lats = obj.getString("Latitude")
+                val lngs = obj.getString("Longitude")
+                val vno = obj.getString("Vno")
+
+                bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(),0,0))
+
+            }
+        }
+
         bikeStationResult = BikeStationResult(bikeStationlists)
         updateMapMarker(bikeStationResult)
 
@@ -224,7 +285,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     // 마커 생성 메소드 - fetchBikeStation 에 의해 호출됨
     private fun updateMapMarker(result: BikeStationResult){
 
-        Log.d(TAG, "MainAcitivity - updateMapMarker() called")
 
          if (result.stations.isNotEmpty()){
             resetNubijaMarkerList()
@@ -244,8 +304,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                  nubijaMarkerMap.put(bikestations.tmid , marker)
 
              }
-             //InfoWindow 내용구성 함수 실행
-             infoWindowAdapter()
 
         }
 
@@ -315,8 +373,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     //InfoWindow 내용 구성
-    private fun infoWindowAdapter() {
+    private fun infoWindowSetting() {
         // InfoWindow 설정
+
+        naverMap.setOnMapClickListener { pointF, latLng ->
+
+            if (infoWindow.isAdded) {
+                val marker = infoWindow.marker!!
+                marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                infoWindow.close()
+            }
+        }
         infoWindow.adapter = object : InfoWindow.DefaultTextAdapter(applicationContext) {
             override fun getText(infoWindow: InfoWindow): CharSequence {
                val tag = infoWindow.marker?.tag.toString()
@@ -324,7 +391,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 for (station in result) {
                     if (tag.toInt() == station.tmid) {
-                        return "${station.name}\n대여가능:0\n반납가능:0"
+                        return "${station.name}\n반납가능:${station.empty}\n대여가능:${station.park}"
                     }
                 }
                 return "load fail"
@@ -333,6 +400,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
     }
+
 
 
 }
