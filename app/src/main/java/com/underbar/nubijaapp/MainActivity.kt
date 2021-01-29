@@ -16,8 +16,10 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.api.NubijaAPI
 import com.data.nubija.BikeStation
 import com.data.nubija.BikeStationResult
+import com.data.nubija.nubija
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -35,11 +37,14 @@ import com.naver.maps.map.overlay.OverlayImage
 import com.naver.maps.map.util.FusedLocationSource
 import com.underbar.nubijaapp.R.id.menu_bike
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 
-@Suppress("DEPRECATION")
+ @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
                         GoogleApiClient.OnConnectionFailedListener{
 
@@ -65,6 +70,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
     companion object    {
         private const val LOCATION_PERMISSION_CODE = 1000
+        private const val NUBIJA_API_SERVER_URL = "http://api.lessnas.me"
     }
 
 
@@ -334,41 +340,51 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     private fun fetchBikeStation()  {
         val bikeStationlists = ArrayList<BikeStation>()
 
-        //서버와 통신 
-        if (false) {
-            val retrofit = Retrofit.Builder()
-                .baseUrl(" http://api.nubija.com:1577/ubike/nubijaInfoApi.do?apikey=aMEEZeshtbWikWmkRmXD")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
+        val retrofit = Retrofit.Builder()
+            .baseUrl(NUBIJA_API_SERVER_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
 
-        }
+        val api = retrofit.create(NubijaAPI::class.java)
+        val callGetNubijaData = api.getNubijaData()
+        callGetNubijaData.enqueue(object : Callback<List<nubija>>   {
+            override fun onResponse(
+                call: Call<List<nubija>>,
+                response: Response<List<nubija>>
+            ) {
+                Toast.makeText(this@MainActivity, "${response.headers()}\n${response.body()}", Toast.LENGTH_LONG).show()
+            }
 
-        else {
-            // 서버와 통신 실패시
-            val assetManager:AssetManager = resources.assets
-            val inputStream = assetManager.open("nubijaData.json")
-            val jsonString = inputStream.bufferedReader().use { it.readText() }
+            override fun onFailure(call: Call<List<nubija>>, t: Throwable) {
+
+                Toast.makeText(this@MainActivity, "fail" , Toast.LENGTH_LONG).show()
+                // 서버와 통신 실패시
+                val assetManager:AssetManager = resources.assets
+                val inputStream = assetManager.open("nubijaData.json")
+                val jsonString = inputStream.bufferedReader().use { it.readText() }
 
 
-            val jObject = JSONObject(jsonString)
-            val jArray = jObject.getJSONArray("TerminalInfo")
+                val jObject = JSONObject(jsonString)
+                val jArray = jObject.getJSONArray("TerminalInfo")
 
-            for (i in 0 until jArray.length()) {
+                for (i in 0 until jArray.length()) {
 
-                val obj = jArray.getJSONObject(i)
-                val name = obj.getString("Tmname")
-                val lats = obj.getString("Latitude")
-                val lngs = obj.getString("Longitude")
-                val vno = obj.getString("Vno")
+                    val obj = jArray.getJSONObject(i)
+                    val name = obj.getString("Tmname")
+                    val lats = obj.getString("Latitude")
+                    val lngs = obj.getString("Longitude")
+                    val vno = obj.getString("Vno")
 
-                bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(),0,0))
+                    bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(),0,0))
+
+                }
+
+
+                bikeStationResult = BikeStationResult(bikeStationlists)
+                updateMapMarker(bikeStationResult)
 
             }
-        }
-
-        bikeStationResult = BikeStationResult(bikeStationlists)
-        updateMapMarker(bikeStationResult)
-
+        })
 
 
     }
