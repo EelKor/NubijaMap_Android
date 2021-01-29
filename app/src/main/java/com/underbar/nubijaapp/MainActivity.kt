@@ -1,4 +1,4 @@
-package com.underbar.nubijaapp
+ package com.underbar.nubijaapp
 
 import android.Manifest
 import android.content.Context
@@ -185,10 +185,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         }
         providerClient.lastLocation.addOnSuccessListener {
             it?.let {
+
+                // 카메라 포지션 객체 생성, 카메라 위치 및 줌 결정
+                val cameraPosition = CameraPosition(
+                    LatLng(it.latitude, it.longitude),
+                    15.0
+                )
+                // 위치 오버레이 설정
                 val locationOverlay = naverMap.locationOverlay
                 locationOverlay.position = LatLng(it.latitude, it.longitude)
 
-                val cameraUpdate = CameraUpdate.scrollTo(LatLng(it.latitude, it.longitude))
+                // 카메라 포지션 객체로 카메라 위치 업데이트
+                val cameraUpdate = CameraUpdate.toCameraPosition(cameraPosition)
                 naverMap.moveCamera(cameraUpdate)
 
             }
@@ -294,7 +302,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
         this.naverMap = naverMap
         //지도 범위 제한
-        naverMap.extent = LatLngBounds(LatLng(31.43, 122.37), LatLng(44.35, 132.0))
+        naverMap.extent = LatLngBounds(LatLng(35.092098, 128.453699), LatLng(35.394740, 129.044587))
+        naverMap.minZoom = 9.0
+        naverMap.maxZoom = 18.0
 
         //지도 옵션 지정 - 자전거 지도
         naverMap.mapType = NaverMap.MapType.Basic
