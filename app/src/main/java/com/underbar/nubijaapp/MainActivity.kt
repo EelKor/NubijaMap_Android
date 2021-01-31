@@ -347,19 +347,55 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
         val api = retrofit.create(NubijaAPI::class.java)
         val callGetNubijaData = api.getNubijaData()
-        callGetNubijaData.enqueue(object : Callback<List<nubija>>   {
+        callGetNubijaData.enqueue(object : Callback<List<nubija>> {
             override fun onResponse(
-                call: Call<List<nubija>>,
-                response: Response<List<nubija>>
+                    call: Call<List<nubija>>,
+                    response: Response<List<nubija>>
             ) {
-                Toast.makeText(this@MainActivity, "${response.headers()}\n${response.body()}", Toast.LENGTH_LONG).show()
+                    val rawdata: List<nubija> = response.body()!!
+
+
+                    // 좌표값 불러오기
+                    val assetManager: AssetManager = resources.assets
+                    val inputStream = assetManager.open("nubijaData.json")
+                    val jsonString = inputStream.bufferedReader().use { it.readText() }
+
+
+                    val jObject = JSONObject(jsonString)
+                    val jArray = jObject.getJSONArray("TerminalInfo")
+
+                    for (i in 0 until jArray.length()) {
+
+                        val obj = jArray.getJSONObject(i)
+                        val name = obj.getString("Tmname")
+                        val lats = obj.getString("Latitude")
+                        val lngs = obj.getString("Longitude")
+                        val vno = obj.getString("Vno")
+
+                        if (rawdata[i].Vno == vno.toString())   {
+                            val empty: String = rawdata[i].Emptycnt
+                            val park: String = rawdata[i].Parkcnt
+
+                            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), empty, park))
+
+                        }
+
+                        else    {
+                            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
+                        }
+
+                    }
+                    bikeStationResult = BikeStationResult(bikeStationlists)
+                    updateMapMarker(bikeStationResult)
+
+
             }
 
             override fun onFailure(call: Call<List<nubija>>, t: Throwable) {
 
-                Toast.makeText(this@MainActivity, "fail" , Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, "fail", Toast.LENGTH_LONG).show()
                 // 서버와 통신 실패시
-                val assetManager:AssetManager = resources.assets
+                val assetManager: AssetManager = resources.assets
                 val inputStream = assetManager.open("nubijaData.json")
                 val jsonString = inputStream.bufferedReader().use { it.readText() }
 
@@ -375,7 +411,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                     val lngs = obj.getString("Longitude")
                     val vno = obj.getString("Vno")
 
-                    bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(),0,0))
+                    bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
 
                 }
 
