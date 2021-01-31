@@ -9,7 +9,6 @@ import android.content.res.AssetManager
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Vibrator
 import android.provider.Settings
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -68,9 +67,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
     private var mBackWait:Long = 0
 
+
     companion object    {
         private const val LOCATION_PERMISSION_CODE = 1000
         private const val NUBIJA_API_SERVER_URL = "http://api.lessnas.me"
+
+        // 마커 색깔 결정
+        private const val MAX_RED_BIKE_INDEX = 5
+        private const val MIN_RED_BIKE_INDEX = 0
+
+        private const val MAX_YELLOW_BIKE_INDEX = 10
+        private const val MIN_YELLOW_BIKE_INDEX = 5
+
+        private const val MAX_GREEN_BIKE_INDEX = 100
+        private const val MIN_GREEN_BIKE_INDEX = 10
     }
 
 
@@ -393,7 +403,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
             override fun onFailure(call: Call<List<nubija>>, t: Throwable) {
 
-                Toast.makeText(this@MainActivity, "fail", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, "서버로 부터 데이터를 받아오는데 실패 했습니다", Toast.LENGTH_LONG).show()
                 // 서버와 통신 실패시
                 val assetManager: AssetManager = resources.assets
                 val inputStream = assetManager.open("nubijaData.json")
@@ -437,8 +447,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
                  val marker = Marker()
 
+                 // 대여 가능 자전거 댓수 기준으로 마커 색깔 결정
+                 when(bikestations.park.toInt())   {
+                     in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                     in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                     in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                     else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                 }
                  marker.position = LatLng(bikestations.lat, bikestations.lng)
-                 marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
                  marker.map = naverMap
 
                  // 마커 테그로 고유의 ID 부여
@@ -457,23 +473,62 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     private val listener = Overlay.OnClickListener {overlay ->
 
         // 진동 효과
-        val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(50)
+        // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        //vibrator.vibrate(50)
 
         // 마커 초기화
         for (marker in nubijaMarkerMap.values) {
-            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+
+            // 마커 태그 INT 형으로 저장
+            val vno = marker.tag.toString().toInt()
+
+            // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
+            for (i in bikeStationResult.stations.indices)   {
+                if (vno == bikeStationResult.stations[i].tmid)  {
+                    when(bikeStationResult.stations[i].park.toInt())   {
+                        in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                        in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                        in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                        else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                    }
+                }
+            }
+
         }
 
         val marker = overlay as Marker
 
         //Info Window 가 존재 하면 닫고, 존재 하지 않으면 열기
         if (marker.hasInfoWindow()) {
-            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+            val vno = marker.tag.toString().toInt()
+
+            // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
+            for (i in bikeStationResult.stations.indices)   {
+                if (vno == bikeStationResult.stations[i].tmid)  {
+                    when(bikeStationResult.stations[i].park.toInt())   {
+                        in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                        in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                        in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                        else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                    }
+                }
+            }
             infoWindow.close()
         }
         else {
-            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
+            val vno = marker.tag.toString().toInt()
+
+            // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
+            for (i in bikeStationResult.stations.indices)   {
+                if (vno == bikeStationResult.stations[i].tmid)  {
+                    when(bikeStationResult.stations[i].park.toInt())   {
+                        in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green_clicked)
+                        in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow_clicked)
+                        in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red_clicked)
+                        else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                    }
+                }
+            }
             infoWindow.open(marker)
         }
 
@@ -486,23 +541,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     private fun resetNubijaMarkerList(){
         if (nubijaMarkerMap.isEmpty() ) {
             for (marker in nubijaMarkerMap.values) {
-                marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
                 marker.map = null
             }
         }
     }
 
 
-    // 지도에서 마커 없앨때 사용
+    // 바텀 네비게이션 클릭시 지도에서 마커 없앨때 사용
     private fun clearMarker() {
         for (marker in nubijaMarkerMap.values) {
-            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
             marker.map = null
         }
     }
 
 
-    // 마커 재생성 때 사용
+    // 바텀 네비게이션 클릭시 마커 재생성 때 사용
     private fun visualMarker() {
         if (nubijaMarkerMap.isEmpty()) {
             fetchBikeStation()
@@ -510,6 +563,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
         else {
             for (marker in nubijaMarkerMap.values) {
+                val vno = marker.tag.toString().toInt()
+
+                // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
+                for (i in bikeStationResult.stations.indices)   {
+                    if (vno == bikeStationResult.stations[i].tmid)  {
+                        when(bikeStationResult.stations[i].park.toInt())   {
+                            in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                            in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                            in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                            else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                        }
+                    }
+                }
                 marker.map = naverMap
             }
         }
@@ -523,11 +589,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
             if (infoWindow.isAdded) {
                 val marker = infoWindow.marker!!
-                marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                val vno = marker.tag.toString().toInt()
+
+                // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
+                for (i in bikeStationResult.stations.indices)   {
+                    if (vno == bikeStationResult.stations[i].tmid)  {
+                        when(bikeStationResult.stations[i].park.toInt())   {
+                            in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                            in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                            in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                            else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                        }
+                    }
+                }
 
                 // 진동 효과
-                val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                vibrator.vibrate(50)
+                // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                // vibrator.vibrate(50)
                 
                 infoWindow.close()
             }
@@ -539,7 +617,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
                 for (station in result) {
                     if (tag.toInt() == station.tmid) {
-                        return "${station.name}\n반납가능:${station.empty}\n대여가능:${station.park}"
+                        return "${station.name}\n반납가능: ${station.empty}\n대여가능: ${station.park}"
                     }
                 }
                 return "load fail"
