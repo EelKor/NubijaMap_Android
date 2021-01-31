@@ -436,9 +436,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
              for (bikestations in result.stations)  {
 
                  val marker = Marker()
-
+                 when(bikestations.park.toInt())   {
+                     in 10 until 100 -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                     in 4 until 10  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                     in 0 until  4  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                     else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                 }
                  marker.position = LatLng(bikestations.lat, bikestations.lng)
-                 marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
                  marker.map = naverMap
 
                  // 마커 테그로 고유의 ID 부여
@@ -457,8 +461,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     private val listener = Overlay.OnClickListener {overlay ->
 
         // 진동 효과
-        val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(50)
+        // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        //vibrator.vibrate(50)
 
         // 마커 초기화
         for (marker in nubijaMarkerMap.values) {
@@ -526,8 +530,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                 marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
 
                 // 진동 효과
-                val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                vibrator.vibrate(50)
+                // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                // vibrator.vibrate(50)
                 
                 infoWindow.close()
             }
@@ -539,7 +543,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
                 for (station in result) {
                     if (tag.toInt() == station.tmid) {
-                        return "${station.name}\n반납가능:${station.empty}\n대여가능:${station.park}"
+                        return "${station.name}\n반납가능: ${station.empty}\n대여가능: ${station.park}"
                     }
                 }
                 return "load fail"
