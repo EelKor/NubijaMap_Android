@@ -1,22 +1,32 @@
-package com.underbar.nubijaapp
+ package com.underbar.nubijaapp
 
 import android.Manifest
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.AssetManager
+import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Vibrator
-import android.util.Log
+import android.provider.Settings
 import android.widget.Toast
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.api.NubijaAPI
 import com.data.nubija.BikeStation
 import com.data.nubija.BikeStationResult
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationResult
+import com.data.nubija.nubija
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.gun0912.tedpermission.PermissionListener
+import com.gun0912.tedpermission.TedPermission
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.geometry.LatLngBounds
 import com.naver.maps.map.*
@@ -25,19 +35,25 @@ import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
 import com.naver.maps.map.overlay.OverlayImage
 import com.naver.maps.map.util.FusedLocationSource
-import com.naver.maps.map.util.MarkerIcons
 import com.underbar.nubijaapp.R.id.menu_bike
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
+ @Suppress("DEPRECATION")
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
+                        GoogleApiClient.OnConnectionFailedListener{
 
     //위치정보 멤버 변수 선언
     private lateinit var locationSource: FusedLocationSource
-    private lateinit var locationCallback: LocationCallback
     private lateinit var naverMap: NaverMap
+
+    lateinit var providerClient: FusedLocationProviderClient
+    lateinit var googleApiClient: GoogleApiClient
 
     //하단 내비게이션 바 인덱스
     private var bottomNavigationIndex: Int? = 1
@@ -52,10 +68,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
     private var mBackWait:Long = 0
 
+    companion object    {
+        private const val LOCATION_PERMISSION_CODE = 1000
+        private const val NUBIJA_API_SERVER_URL = "http://api.lessnas.me"
+    }
+
 
 
 
     //메모리에 올라갔을때
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -84,21 +106,127 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
         //LOCATION_PERMISSION_CODE
         locationSource =
-                FusedLocationSource(this, 1000)
+                FusedLocationSource(this, LOCATION_PERMISSION_CODE)
 
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
-                locationResult ?: return
-                for (location in locationResult.locations){
+        TedPermission.with(this)
+                .setPermissionListener(permissionListener)
+                .setRationaleConfirmText("원활한 사용을 위해 위치 권한이 필요합니다")
+                .setDeniedMessage("위치 정보 이용 거절됨")
+                .setPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
+                .check()
 
-                    Log.d("로그", "${location}")
-                }
-            }
-        }
+        googleApiClient = GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build()
 
+        providerClient = LocationServices.getFusedLocationProviderClient(this)
+        googleApiClient.connect()
 
 
     }
+
+    private val permissionListener = object : PermissionListener {
+        override fun onPermissionGranted() {
+
+            val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+            // 권한은 허용 되었으나 위치 설정이 꺼저있을때 위치 설정 페이지로 이동
+            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))  {
+
+                // 팝업 메시지 구현
+                val builder = AlertDialog.Builder(this@MainActivity)
+                builder.setTitle("앗...!")
+                builder.setMessage("위치 설정이 꺼져 있어요ㅠ\n원활한 사용을 위해 위치 설정을 켜주세요")
+                builder.setPositiveButton(
+                        "설정",
+                        DialogInterface.OnClickListener { dialog, which ->
+                            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                            intent.addCategory(Intent.CATEGORY_DEFAULT)
+                            startActivity(intent)
+                        })
+                builder.setNegativeButton(
+                        "아니오",
+                        DialogInterface.OnClickListener{ dialog, which ->
+                            Toast.makeText(this@MainActivity, "서비스 이용을 위해 위치 설정을 켜주세요", Toast.LENGTH_LONG).show()
+
+                            //네이버 지도 UI 세팅
+                            val uiSettings = naverMap.uiSettings
+                            uiSettings.isLocationButtonEnabled = false
+                            uiSettings.isZoomControlEnabled = false
+
+                            //지도 오버레이 활성화
+                            val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
+                            locationOverlay.isVisible = false                                                            // 오버레이 활성화
+                        })
+
+                builder.show()
+
+            }
+
+
+        }
+
+        override fun onPermissionDenied(deniedPermissions: ArrayList<String>?) {
+            Toast.makeText(this@MainActivity, "위치 권한 거부됨", Toast.LENGTH_SHORT).show()
+            naverMap.locationTrackingMode = LocationTrackingMode.None
+        }
+    }
+
+
+    /**
+     * 위치 정보 제공자가 사용 가능 상태가 되었을때 호출
+     */
+    override fun onConnected(bundle: Bundle?) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+        providerClient.lastLocation.addOnSuccessListener {
+            it?.let {
+
+                // 카메라 포지션 객체 생성, 카메라 위치 및 줌 결정
+                val cameraPosition = CameraPosition(
+                    LatLng(it.latitude, it.longitude),
+                    15.0
+                )
+                // 위치 오버레이 설정
+                val locationOverlay = naverMap.locationOverlay
+                locationOverlay.position = LatLng(it.latitude, it.longitude)
+
+                // 카메라 포지션 객체로 카메라 위치 업데이트
+                val cameraUpdate = CameraUpdate.toCameraPosition(cameraPosition)
+                naverMap.moveCamera(cameraUpdate)
+
+            }
+        }
+    }
+
+    /**
+     * 함수와 사용 불가능 상태가 되었을 때 호출
+     */
+    override fun onConnectionSuspended(p0: Int) {
+        naverMap.locationTrackingMode = LocationTrackingMode.None
+        Toast.makeText(this, "위치 정보를 얻는데 실패 했습니다", Toast.LENGTH_LONG).show()
+    }
+
+    /**
+     * 위치 정보 제공자를 얻지 못할때 호출
+     */
+    override fun onConnectionFailed(p0: ConnectionResult) {
+        naverMap.locationTrackingMode = LocationTrackingMode.None
+        Toast.makeText(this, "위치 정보를 얻는데 실패 했습니다", Toast.LENGTH_LONG).show()
+    }
+
+
+
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
 
@@ -180,7 +308,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
         this.naverMap = naverMap
         //지도 범위 제한
-        naverMap.extent = LatLngBounds(LatLng(31.43, 122.37), LatLng(44.35, 132.0))
+        naverMap.extent = LatLngBounds(LatLng(35.092098, 128.453699), LatLng(35.394740, 129.044587))
+        naverMap.minZoom = 9.0
+        naverMap.maxZoom = 18.0
 
         //지도 옵션 지정 - 자전거 지도
         naverMap.mapType = NaverMap.MapType.Basic
@@ -188,49 +318,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
         //지도 UI 세팅
         val uiSettings = naverMap.uiSettings
-        uiSettings.isLocationButtonEnabled = false
+        uiSettings.isLocationButtonEnabled = true
         uiSettings.isZoomControlEnabled = false
+
+        //지도 위치 표시
+        naverMap.locationSource = locationSource
+
 
         //지도 오버레이 활성화
         val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
         locationOverlay.isVisible = true                                                            // 오버레이 활성화
-        //naverMap.locationSource = locationSource
-
-        // 앱 실행시 초기 위치 불러오기
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        // 위치 정보 엑세스 권한 이 있는지 확인
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1000)
-            }
-
-            else    {
-                Toast.makeText(this, "위치 허가를 받을 수 없습니다", Toast.LENGTH_LONG).show()
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1000)
-            }
-        }
-
-        else    {
-            fusedLocationClient.lastLocation
-                    .addOnSuccessListener { location ->
-                        if (location == null) {
-                            Toast.makeText(this, "위치 옵션을 켜주세요", Toast.LENGTH_LONG).show()
-                        } else {
-                            locationOverlay.position = LatLng(location.latitude, location.longitude)
-                            val cameraUpdate = CameraUpdate.scrollTo(LatLng(location.latitude, location.longitude))
-                            naverMap.moveCamera(cameraUpdate)
-                        }
-                    }
-                    .addOnFailureListener {
-                        Toast.makeText(this, "위치 정보를 가져오는데 실패 했습니다\n${it.message}", Toast.LENGTH_LONG).show()
-                        it.printStackTrace()
-                    }
-        }
-
-
 
 
         //InfoWindow 내용구성 함수 실행
@@ -243,41 +340,87 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
     private fun fetchBikeStation()  {
         val bikeStationlists = ArrayList<BikeStation>()
 
-        //서버와 통신 
-        if (false) {
-            val retrofit = Retrofit.Builder()
-                .baseUrl(" http://api.nubija.com:1577/ubike/nubijaInfoApi.do?apikey=aMEEZeshtbWikWmkRmXD")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
+        val retrofit = Retrofit.Builder()
+            .baseUrl(NUBIJA_API_SERVER_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
 
-        }
+        val api = retrofit.create(NubijaAPI::class.java)
+        val callGetNubijaData = api.getNubijaData()
+        callGetNubijaData.enqueue(object : Callback<List<nubija>> {
+            override fun onResponse(
+                    call: Call<List<nubija>>,
+                    response: Response<List<nubija>>
+            ) {
+                    val rawdata: List<nubija> = response.body()!!
 
-        else {
-            // 서버와 통신 실패시
-            val assetManager:AssetManager = resources.assets
-            val inputStream = assetManager.open("nubijaData.json")
-            val jsonString = inputStream.bufferedReader().use { it.readText() }
+
+                    // 좌표값 불러오기
+                    val assetManager: AssetManager = resources.assets
+                    val inputStream = assetManager.open("nubijaData.json")
+                    val jsonString = inputStream.bufferedReader().use { it.readText() }
 
 
-            val jObject = JSONObject(jsonString)
-            val jArray = jObject.getJSONArray("TerminalInfo")
+                    val jObject = JSONObject(jsonString)
+                    val jArray = jObject.getJSONArray("TerminalInfo")
 
-            for (i in 0 until jArray.length()) {
+                    for (i in 0 until jArray.length()) {
 
-                val obj = jArray.getJSONObject(i)
-                val name = obj.getString("Tmname")
-                val lats = obj.getString("Latitude")
-                val lngs = obj.getString("Longitude")
-                val vno = obj.getString("Vno")
+                        val obj = jArray.getJSONObject(i)
+                        val name = obj.getString("Tmname")
+                        val lats = obj.getString("Latitude")
+                        val lngs = obj.getString("Longitude")
+                        val vno = obj.getString("Vno")
 
-                bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(),0,0))
+                        if (rawdata[i].Vno == vno.toString())   {
+                            val empty: String = rawdata[i].Emptycnt
+                            val park: String = rawdata[i].Parkcnt
+
+                            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), empty, park))
+
+                        }
+
+                        else    {
+                            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
+                        }
+
+                    }
+                    bikeStationResult = BikeStationResult(bikeStationlists)
+                    updateMapMarker(bikeStationResult)
+
 
             }
-        }
 
-        bikeStationResult = BikeStationResult(bikeStationlists)
-        updateMapMarker(bikeStationResult)
+            override fun onFailure(call: Call<List<nubija>>, t: Throwable) {
 
+                Toast.makeText(this@MainActivity, "fail", Toast.LENGTH_LONG).show()
+                // 서버와 통신 실패시
+                val assetManager: AssetManager = resources.assets
+                val inputStream = assetManager.open("nubijaData.json")
+                val jsonString = inputStream.bufferedReader().use { it.readText() }
+
+
+                val jObject = JSONObject(jsonString)
+                val jArray = jObject.getJSONArray("TerminalInfo")
+
+                for (i in 0 until jArray.length()) {
+
+                    val obj = jArray.getJSONObject(i)
+                    val name = obj.getString("Tmname")
+                    val lats = obj.getString("Latitude")
+                    val lngs = obj.getString("Longitude")
+                    val vno = obj.getString("Vno")
+
+                    bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
+
+                }
+
+
+                bikeStationResult = BikeStationResult(bikeStationlists)
+                updateMapMarker(bikeStationResult)
+
+            }
+        })
 
 
     }
