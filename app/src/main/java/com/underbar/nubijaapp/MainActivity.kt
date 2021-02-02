@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
         // 마커 색깔 결정
         private const val MAX_RED_BIKE_INDEX = 5
-        private const val MIN_RED_BIKE_INDEX = 0
+        private const val MIN_RED_BIKE_INDEX = 1
 
         private const val MAX_YELLOW_BIKE_INDEX = 10
         private const val MIN_YELLOW_BIKE_INDEX = 5
@@ -133,6 +133,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
         providerClient = LocationServices.getFusedLocationProviderClient(this)
         googleApiClient.connect()
+
 
 
     }
@@ -316,6 +317,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     // mapFragment.getMapAsync(this) 에 의해 호출됨
     override fun onMapReady(naverMap: NaverMap) {
 
+        Toast.makeText(this, "실시간 터미널 현황은 실제와 차이가 있을수 있습니다", Toast.LENGTH_SHORT).show()
+
         this.naverMap = naverMap
         //지도 범위 제한
         naverMap.extent = LatLngBounds(LatLng(35.092098, 128.453699), LatLng(35.394740, 129.044587))
@@ -362,6 +365,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                     call: Call<List<nubija>>,
                     response: Response<List<nubija>>
             ) {
+
                     val rawdata: List<nubija> = response.body()!!
 
 
@@ -525,7 +529,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                         in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green_clicked)
                         in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow_clicked)
                         in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red_clicked)
-                        else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                        else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray_clicked)
                     }
                 }
             }
