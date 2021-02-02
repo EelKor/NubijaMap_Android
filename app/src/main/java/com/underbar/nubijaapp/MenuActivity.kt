@@ -8,10 +8,6 @@ import android.widget.Button
 
 class MenuActivity : AppCompatActivity() {
 
-    companion object {
-        const val TAG : String = "로그"
-
-    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,12 +18,18 @@ class MenuActivity : AppCompatActivity() {
         val btn_about:Button = findViewById(R.id.btn_about)
         btn_about.setOnClickListener {
 
-            Log.d(TAG, "MenuActivity - About 버튼 클릭")
-
             // AboutActivity 로 인텐트
             val aboutIntent = Intent(this, MenuAboutActivity::class.java)
             startActivity(aboutIntent)
 
+
+
+        }
+
+        val btn_license:Button = findViewById(R.id.btn_license)
+        btn_license.setOnClickListener {
+            val licenseIntent = Intent(this, MenuLicenseActivity::class.java)
+            startActivity(licenseIntent)
         }
     }
 }
