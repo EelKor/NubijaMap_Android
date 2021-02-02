@@ -4,13 +4,55 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_gravity="top"
+    android:orientation="vertical"
     tools:context=".MenuLicenseActivity">
 
+    <Button
+        android:id="@+id/navermap_sdk"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:text="navermaps/android-map-sdk"/>
 
-    <TextView
-        android:id="@+id/TedPermission"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/ted_permission_license" />
+    <Button
+        android:id="@+id/tedpermission"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:text="TedPermission"/>
+
+    <Button
+        android:id="@+id/retrofit2"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:text="Retorfit2"/>
+
+    <Button
+        android:id="@+id/androidx"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:text="androidx"/>
+
+    <Button
+        android:id="@+id/gson"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:text="gson"/>
+
+    <Button
+        android:id="@+id/Junit"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:text="Junit4"/>
+
+    <Button
+        android:id="@+id/kotlin"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:text="Kotlin"/>
+
+    <Button
+        android:id="@+id/android"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:text="Android"/>
+
 </androidx.appcompat.widget.LinearLayoutCompat>
