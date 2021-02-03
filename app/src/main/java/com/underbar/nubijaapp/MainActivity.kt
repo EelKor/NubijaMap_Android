@@ -267,6 +267,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRANSIT, false)
 
                 bottomNavigationIndex = 1
+
+                //네이버 지도 UI 세팅
+                val uiSettings = naverMap.uiSettings
+                uiSettings.isLocationButtonEnabled = true
+                uiSettings.isZoomControlEnabled = false
+
+                //지도 오버레이 활성화
+                val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
+                locationOverlay.isVisible = true                                                            // 오버레이 활성화
                 visualMarker()
 
             }
