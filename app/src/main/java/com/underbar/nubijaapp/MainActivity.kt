@@ -521,12 +521,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                  // 대여 가능 자전거 댓수 기준으로 마커 색깔 결정
                  // 서버와 통신이 성공적 이면
                  if (bikestations.park != "null")  {
-                     when(bikestations.park.toInt())   {
-                         in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                         in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                         in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                         else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+
+                     // 터미널이 가득 찬 경우 파란색 마커 표시
+                     if (bikestations.empty.toInt() == 0)    {
+                         marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
                      }
+
+                     else   {
+                         when(bikestations.park.toInt())   {
+                             in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                             in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                             in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                             else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                         }
+                     }
+
                  }
 
                  // 서버와 통신 문제로 주차 가능 댓수가 null 이면
@@ -569,11 +578,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
                     // 서버로 부터 성공적으로 Parkcnt 받았을떄
                     if (bikeStationResult.stations[i].park != "null")   {
-                        when(bikeStationResult.stations[i].park.toInt())   {
-                            in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                            in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                            in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                            else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+
+                        // 터미널이 가득 찬 경우 파란색 마커 표시
+                        if (bikeStationResult.stations[i].empty.toInt() == 0)    {
+                            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
+                        }
+
+                        else   {
+                            when(bikeStationResult.stations[i].park.toInt())   {
+                                in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                                in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                                in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                                else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                            }
                         }
                     }
 
@@ -597,15 +614,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                 if (vno == bikeStationResult.stations[i].tmid)  {
 
                     // 서버로 부터 성공적으로 Parkcnt 받았을떄
-                    if (bikeStationResult.stations[i].park != "null")   {
-                        when(bikeStationResult.stations[i].park.toInt())   {
-                            in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                            in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                            in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                            else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                    if (bikeStationResult.stations[i].park != "null") {
+
+                        // 터미널이 가득 찬 경우 파란색 마커 표시
+                        if (bikeStationResult.stations[i].empty.toInt() == 0) {
+                            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
+                        } else {
+                            when (bikeStationResult.stations[i].park.toInt()) {
+                                in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon =
+                                    OverlayImage.fromResource(R.drawable.ic_bike_green)
+                                in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX -> marker.icon =
+                                    OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                                in MIN_RED_BIKE_INDEX until MAX_RED_BIKE_INDEX -> marker.icon =
+                                    OverlayImage.fromResource(R.drawable.ic_bike_red)
+                                else -> marker.icon =
+                                    OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                            }
                         }
                     }
-
                     // 통신에 실패해 Parkcnt 가 null 일때
                     else    {
                         marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
@@ -624,11 +650,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
                     // 서버로 부터 성공적으로 Parkcnt 받았을떄
                     if (bikeStationResult.stations[i].park != "null")   {
-                        when(bikeStationResult.stations[i].park.toInt())   {
-                            in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green_clicked)
-                            in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow_clicked)
-                            in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red_clicked)
-                            else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray_clicked)
+                        // 터미널이 가득 찬 경우 파란색 마커 표시
+                        if (bikeStationResult.stations[i].empty.toInt() == 0)    {
+                            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue_clicked)
+                        }
+
+                        else {
+                            when (bikeStationResult.stations[i].park.toInt()) {
+                                in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon =
+                                    OverlayImage.fromResource(R.drawable.ic_bike_green_clicked)
+                                in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX -> marker.icon =
+                                    OverlayImage.fromResource(R.drawable.ic_bike_yellow_clicked)
+                                in MIN_RED_BIKE_INDEX until MAX_RED_BIKE_INDEX -> marker.icon =
+                                    OverlayImage.fromResource(R.drawable.ic_bike_red_clicked)
+                                else -> marker.icon =
+                                    OverlayImage.fromResource(R.drawable.ic_bike_gray_clicked)
+                            }
                         }
                     }
 
@@ -680,11 +717,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
                         // 서버로 부터 성공적으로 Parkcnt 받았을떄
                         if (bikeStationResult.stations[i].park != "null")   {
-                            when(bikeStationResult.stations[i].park.toInt())   {
-                                in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                                in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                                in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                                else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                            // 터미널이 가득 찬 경우 파란색 마커 표시
+                            if (bikeStationResult.stations[i].empty.toInt() == 0)    {
+                                marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
+                            }
+
+                            else   {
+                                when(bikeStationResult.stations[i].park.toInt())   {
+                                    in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                                    in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                                    in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                                    else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                                }
                             }
                         }
 
@@ -703,6 +747,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     private fun infoWindowSetting() {
         // InfoWindow 설정
 
+        // 지도 가 클릭 됬을때 -> InfoWindow 닫기
         naverMap.setOnMapClickListener { pointF, latLng ->
 
             if (infoWindow.isAdded) {
@@ -715,11 +760,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
                         // 서버로 부터 성공적으로 Parkcnt 받았을떄
                         if (bikeStationResult.stations[i].park != "null")   {
-                            when(bikeStationResult.stations[i].park.toInt())   {
-                                in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                                in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                                in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                                else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+
+                            // 터미널이 가득 찬 경우 파란색 마커 표시
+                            if (bikeStationResult.stations[i].empty.toInt() == 0)    {
+                                marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
+                            }
+                            // 아닐 경우 대여 가능 대수에 따른 색깔 부여
+                            else   {
+                                when(bikeStationResult.stations[i].park.toInt())   {
+                                    in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                                    in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                                    in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                                    else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                                }
                             }
                         }
 
