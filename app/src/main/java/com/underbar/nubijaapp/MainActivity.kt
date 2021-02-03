@@ -2,7 +2,6 @@
 
 import android.Manifest
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.AssetManager
@@ -151,26 +150,26 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                 builder.setTitle("앗...!")
                 builder.setMessage("위치 설정이 꺼져 있어요ㅠ\n원활한 사용을 위해 위치 설정을 켜주세요")
                 builder.setPositiveButton(
-                        "설정",
-                        DialogInterface.OnClickListener { dialog, which ->
-                            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                            intent.addCategory(Intent.CATEGORY_DEFAULT)
-                            startActivity(intent)
-                        })
+                        "설정"
+                ) { dialog, which ->
+                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    intent.addCategory(Intent.CATEGORY_DEFAULT)
+                    startActivity(intent)
+                }
                 builder.setNegativeButton(
-                        "아니오",
-                        DialogInterface.OnClickListener{ dialog, which ->
-                            Toast.makeText(this@MainActivity, "서비스 이용을 위해 위치 설정을 켜주세요", Toast.LENGTH_LONG).show()
+                        "아니오"
+                ) { dialog, which ->
+                    Toast.makeText(this@MainActivity, "서비스 이용을 위해 위치 설정을 켜주세요", Toast.LENGTH_LONG).show()
 
-                            //네이버 지도 UI 세팅
-                            val uiSettings = naverMap.uiSettings
-                            uiSettings.isLocationButtonEnabled = false
-                            uiSettings.isZoomControlEnabled = false
+                    //네이버 지도 UI 세팅
+                    val uiSettings = naverMap.uiSettings
+                    uiSettings.isLocationButtonEnabled = false
+                    uiSettings.isZoomControlEnabled = false
 
-                            //지도 오버레이 활성화
-                            val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
-                            locationOverlay.isVisible = false                                                            // 오버레이 활성화
-                        })
+                    //지도 오버레이 활성화
+                    val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
+                    locationOverlay.isVisible = false                                                            // 오버레이 활성화
+                }
 
                 builder.show()
 
@@ -280,10 +279,28 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRANSIT, true)
                 bottomNavigationIndex = 2
 
-                Toast.makeText(this, "다음 업데이트를 기다려 주세요~", Toast.LENGTH_SHORT).show()
-
                 // 마커 삭제
                 clearMarker()
+
+                //안내 페이지 표시
+                val builder = AlertDialog.Builder(this@MainActivity)
+                builder.setTitle("")
+                builder.setMessage("업데이트 준비중 입니다!")
+                builder.setNegativeButton(
+                        "닫기"
+                ) { dialog, which ->
+
+                    //네이버 지도 UI 세팅
+                    val uiSettings = naverMap.uiSettings
+                    uiSettings.isLocationButtonEnabled = false
+                    uiSettings.isZoomControlEnabled = false
+
+                    //지도 오버레이 활성화
+                    val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
+                    locationOverlay.isVisible = false                                                            // 오버레이 활성화
+                }
+
+                builder.show()
 
             }
 
@@ -433,7 +450,34 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
             override fun onFailure(call: Call<List<nubija>>, t: Throwable) {
 
-                Toast.makeText(this@MainActivity, "서버로 부터 데이터를 받아오는데 실패 했습니다", Toast.LENGTH_LONG).show()
+                // 팝업 메시지 구현
+                val builder = AlertDialog.Builder(this@MainActivity)
+                builder.setTitle("앗...!")
+                builder.setMessage("인터넷 연결 상태를 확인해 주세요")
+                builder.setPositiveButton(
+                        "설정"
+                ) { dialog, which ->
+                    val intent = Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS)
+                    intent.addCategory(Intent.CATEGORY_DEFAULT)
+                    startActivity(intent)
+                }
+                builder.setNegativeButton(
+                        "아니오"
+                ) { dialog, which ->
+                    Toast.makeText(this@MainActivity, "서비스 이용을 위해 인터넷을 켜주세요", Toast.LENGTH_LONG).show()
+
+                    //네이버 지도 UI 세팅
+                    val uiSettings = naverMap.uiSettings
+                    uiSettings.isLocationButtonEnabled = false
+                    uiSettings.isZoomControlEnabled = false
+
+                    //지도 오버레이 활성화
+                    val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
+                    locationOverlay.isVisible = false                                                            // 오버레이 활성화
+                }
+
+                builder.show()
+
                 // 서버와 통신 실패시
                 val assetManager: AssetManager = resources.assets
                 val inputStream = assetManager.open("nubijaData.json")
