@@ -317,8 +317,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     // mapFragment.getMapAsync(this) 에 의해 호출됨
     override fun onMapReady(naverMap: NaverMap) {
 
-        Toast.makeText(this, "실시간 터미널 현황은 실제와 차이가 있을수 있습니다", Toast.LENGTH_SHORT).show()
-
         this.naverMap = naverMap
         //지도 범위 제한
         naverMap.extent = LatLngBounds(LatLng(35.092098, 128.453699), LatLng(35.394740, 129.044587))
@@ -365,42 +363,70 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                     call: Call<List<nubija>>,
                     response: Response<List<nubija>>
             ) {
+                    if (response.body() != null) {
 
-                    val rawdata: List<nubija> = response.body()!!
+                        Toast.makeText(this@MainActivity, "실시간 터미널 현황은 실제와 차이가 있을수 있습니다", Toast.LENGTH_SHORT).show()
+                        val rawdata: List<nubija> = response.body()!!
+
+                        // 좌표값 불러오기
+                        val assetManager: AssetManager = resources.assets
+                        val inputStream = assetManager.open("nubijaData.json")
+                        val jsonString = inputStream.bufferedReader().use { it.readText() }
 
 
-                    // 좌표값 불러오기
-                    val assetManager: AssetManager = resources.assets
-                    val inputStream = assetManager.open("nubijaData.json")
-                    val jsonString = inputStream.bufferedReader().use { it.readText() }
+                        val jObject = JSONObject(jsonString)
+                        val jArray = jObject.getJSONArray("TerminalInfo")
 
+                        for (i in 0 until jArray.length()) {
 
-                    val jObject = JSONObject(jsonString)
-                    val jArray = jObject.getJSONArray("TerminalInfo")
+                            val obj = jArray.getJSONObject(i)
+                            val name = obj.getString("Tmname")
+                            val lats = obj.getString("Latitude")
+                            val lngs = obj.getString("Longitude")
+                            val vno = obj.getString("Vno")
 
-                    for (i in 0 until jArray.length()) {
+                            if (rawdata[i].Vno == vno.toString()) {
+                                val empty: String = rawdata[i].Emptycnt
+                                val park: String = rawdata[i].Parkcnt
 
-                        val obj = jArray.getJSONObject(i)
-                        val name = obj.getString("Tmname")
-                        val lats = obj.getString("Latitude")
-                        val lngs = obj.getString("Longitude")
-                        val vno = obj.getString("Vno")
+                                bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), empty, park))
 
-                        if (rawdata[i].Vno == vno.toString())   {
-                            val empty: String = rawdata[i].Emptycnt
-                            val park: String = rawdata[i].Parkcnt
-
-                            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), empty, park))
+                            } else {
+                                bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
+                            }
 
                         }
 
-                        else    {
-                            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
-                        }
+                        bikeStationResult = BikeStationResult(bikeStationlists)
+                        updateMapMarker(bikeStationResult)
 
                     }
-                    bikeStationResult = BikeStationResult(bikeStationlists)
-                    updateMapMarker(bikeStationResult)
+                else    {
+                        Toast.makeText(this@MainActivity, "서버로 부터 데이터를 받아오는데 실패 했습니다", Toast.LENGTH_LONG).show()
+                        // 서버와 통신 실패시
+                        val assetManager: AssetManager = resources.assets
+                        val inputStream = assetManager.open("nubijaData.json")
+                        val jsonString = inputStream.bufferedReader().use { it.readText() }
+
+
+                        val jObject = JSONObject(jsonString)
+                        val jArray = jObject.getJSONArray("TerminalInfo")
+
+                        for (i in 0 until jArray.length()) {
+
+                            val obj = jArray.getJSONObject(i)
+                            val name = obj.getString("Tmname")
+                            val lats = obj.getString("Latitude")
+                            val lngs = obj.getString("Longitude")
+                            val vno = obj.getString("Vno")
+
+                            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
+
+                        }
+                        bikeStationResult = BikeStationResult(bikeStationlists)
+                        updateMapMarker(bikeStationResult)
+
+                }
 
 
             }
@@ -428,14 +454,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                     bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
 
                 }
-
-
                 bikeStationResult = BikeStationResult(bikeStationlists)
                 updateMapMarker(bikeStationResult)
 
             }
         })
-
 
     }
 
@@ -452,12 +475,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                  val marker = Marker()
 
                  // 대여 가능 자전거 댓수 기준으로 마커 색깔 결정
-                 when(bikestations.park.toInt())   {
-                     in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                     in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                     in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                     else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                 // 서버와 통신이 성공적 이면
+                 if (bikestations.park != "null")  {
+                     when(bikestations.park.toInt())   {
+                         in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                         in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                         in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                         else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                     }
                  }
+
+                 // 서버와 통신 문제로 주차 가능 댓수가 null 이면
+                 else   {
+                     marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                 }
+
+
                  marker.position = LatLng(bikestations.lat, bikestations.lng)
                  marker.map = naverMap
 
@@ -489,11 +522,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
             // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
             for (i in bikeStationResult.stations.indices)   {
                 if (vno == bikeStationResult.stations[i].tmid)  {
-                    when(bikeStationResult.stations[i].park.toInt())   {
-                        in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                        in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                        in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                        else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+
+                    // 서버로 부터 성공적으로 Parkcnt 받았을떄
+                    if (bikeStationResult.stations[i].park != "null")   {
+                        when(bikeStationResult.stations[i].park.toInt())   {
+                            in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                            in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                            in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                            else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                        }
+                    }
+
+                    // 통신에 실패해 Parkcnt 가 null 일때
+                    else    {
+                        marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
                     }
                 }
             }
@@ -509,13 +551,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
             // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
             for (i in bikeStationResult.stations.indices)   {
                 if (vno == bikeStationResult.stations[i].tmid)  {
-                    when(bikeStationResult.stations[i].park.toInt())   {
-                        in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                        in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                        in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                        else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+
+                    // 서버로 부터 성공적으로 Parkcnt 받았을떄
+                    if (bikeStationResult.stations[i].park != "null")   {
+                        when(bikeStationResult.stations[i].park.toInt())   {
+                            in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                            in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                            in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                            else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                        }
+                    }
+
+                    // 통신에 실패해 Parkcnt 가 null 일때
+                    else    {
+                        marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
                     }
                 }
+
             }
             infoWindow.close()
         }
@@ -525,11 +577,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
             // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
             for (i in bikeStationResult.stations.indices)   {
                 if (vno == bikeStationResult.stations[i].tmid)  {
-                    when(bikeStationResult.stations[i].park.toInt())   {
-                        in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green_clicked)
-                        in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow_clicked)
-                        in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red_clicked)
-                        else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray_clicked)
+
+                    // 서버로 부터 성공적으로 Parkcnt 받았을떄
+                    if (bikeStationResult.stations[i].park != "null")   {
+                        when(bikeStationResult.stations[i].park.toInt())   {
+                            in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green_clicked)
+                            in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow_clicked)
+                            in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red_clicked)
+                            else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray_clicked)
+                        }
+                    }
+
+                    // 통신에 실패해 Parkcnt 가 null 일때
+                    else    {
+                        marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray_clicked)
                     }
                 }
             }
@@ -572,11 +633,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                 // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
                 for (i in bikeStationResult.stations.indices)   {
                     if (vno == bikeStationResult.stations[i].tmid)  {
-                        when(bikeStationResult.stations[i].park.toInt())   {
-                            in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                            in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                            in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                            else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+
+                        // 서버로 부터 성공적으로 Parkcnt 받았을떄
+                        if (bikeStationResult.stations[i].park != "null")   {
+                            when(bikeStationResult.stations[i].park.toInt())   {
+                                in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                                in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                                in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                                else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                            }
+                        }
+
+                        // 통신에 실패해 Parkcnt 가 null 일때
+                        else    {
+                            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
                         }
                     }
                 }
@@ -598,11 +668,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                 // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
                 for (i in bikeStationResult.stations.indices)   {
                     if (vno == bikeStationResult.stations[i].tmid)  {
-                        when(bikeStationResult.stations[i].park.toInt())   {
-                            in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                            in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                            in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                            else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+
+                        // 서버로 부터 성공적으로 Parkcnt 받았을떄
+                        if (bikeStationResult.stations[i].park != "null")   {
+                            when(bikeStationResult.stations[i].park.toInt())   {
+                                in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
+                                in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                                in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
+                                else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                            }
+                        }
+
+                        // 통신에 실패해 Parkcnt 가 null 일때
+                        else    {
+                            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
                         }
                     }
                 }
