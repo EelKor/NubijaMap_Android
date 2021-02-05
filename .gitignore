@@ -16,3 +16,4 @@ local.properties
 *.log
 *.apk
 *.json
+app/release/app-release.aab
