@@ -282,34 +282,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
             R.id.menu_bus -> {
 
-                //교통량 지도로 지도 옵션 변경
-                naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, false)
-                naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRAFFIC, true)
-                naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRANSIT, true)
                 bottomNavigationIndex = 2
-
-                // 마커 삭제
-                clearMarker()
-
-                //안내 페이지 표시
-                val builder = AlertDialog.Builder(this@MainActivity)
-                builder.setTitle("")
-                builder.setMessage("업데이트 준비중 입니다!")
-                builder.setNegativeButton(
-                        "닫기"
-                ) { dialog, which ->
-
-                    //네이버 지도 UI 세팅
-                    val uiSettings = naverMap.uiSettings
-                    uiSettings.isLocationButtonEnabled = false
-                    uiSettings.isZoomControlEnabled = false
-
-                    //지도 오버레이 활성화
-                    val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
-                    locationOverlay.isVisible = false                                                            // 오버레이 활성화
-                }
-
-                builder.show()
+                Toast.makeText(this, "업데이트 준비중 입니다" , Toast.LENGTH_LONG).show()
 
             }
 
