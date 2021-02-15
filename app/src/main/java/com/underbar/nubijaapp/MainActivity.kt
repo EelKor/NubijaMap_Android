@@ -64,7 +64,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     private val infoWindow = InfoWindow()
 
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
+    // 시간측정을 토스트 메시지 겹침을 방지하기위한 시간 측정 함수
     private var mBackWait:Long = 0
+     private var mToastWait:Long = 0
 
 
     companion object    {
@@ -283,7 +285,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
             R.id.menu_bus -> {
 
                 bottomNavigationIndex = 2
-                Toast.makeText(this, "업데이트 준비중 입니다" , Toast.LENGTH_LONG).show()
+
+                // Toast 메시지 대량 생산을 막기 위한 코드
+                if (System.currentTimeMillis() - mToastWait >= 4000)    {
+                    mToastWait = System.currentTimeMillis()
+                    Toast.makeText(this, "업데이트 준비중 입니다" , Toast.LENGTH_LONG).show()
+                }
+
 
             }
 

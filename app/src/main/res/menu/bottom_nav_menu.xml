@@ -3,13 +3,13 @@
     <item
         android:id="@+id/menu_bike"
         android:title="누비자"
-        android:icon="@drawable/ic_baseline_directions_bike"
+        android:icon="@drawable/ic_baseline_pedal_bike"
         />
 
     <item
         android:id="@+id/menu_bus"
         android:title="즐겨찾기"
-        android:icon="@drawable/ic_baseline_favorite"
+        android:icon="@drawable/ic_baseline_favoriate"
         />
 
     <item
