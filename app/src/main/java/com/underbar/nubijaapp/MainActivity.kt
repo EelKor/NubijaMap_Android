@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.AssetManager
+import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -43,18 +44,12 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 
  @Suppress("DEPRECATION")
-class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
-                        GoogleApiClient.OnConnectionFailedListener{
+class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
     //위치정보 멤버 변수 선언
     private lateinit var locationSource: FusedLocationSource
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var naverMap: NaverMap
-
-    lateinit var providerClient: FusedLocationProviderClient
-    lateinit var googleApiClient: GoogleApiClient
-
-    //하단 내비게이션 바 인덱스
-    private var bottomNavigationIndex: Int? = 1
 
     //누비자 정류장 정보
     private lateinit var bikeStationResult: BikeStationResult
@@ -119,23 +114,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         locationSource =
                 FusedLocationSource(this, LOCATION_PERMISSION_CODE)
 
+        //위치 서비스 클라이언트 생성 - FusedLocationClient
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
         TedPermission.with(this)
                 .setPermissionListener(permissionListener)
                 .setRationaleConfirmText("원활한 사용을 위해 위치 권한이 필요합니다")
                 .setDeniedMessage("위치 정보 이용 거절됨")
                 .setPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
                 .check()
-
-        googleApiClient = GoogleApiClient.Builder(this)
-                .addApi(LocationServices.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build()
-
-        providerClient = LocationServices.getFusedLocationProviderClient(this)
-        googleApiClient.connect()
-
-
 
     }
 
@@ -187,57 +174,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     }
 
 
-    /**
-     * 위치 정보 제공자가 사용 가능 상태가 되었을때 호출
-     */
-    override fun onConnected(bundle: Bundle?) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        }
-        providerClient.lastLocation.addOnSuccessListener {
-            it?.let {
-
-                // 카메라 포지션 객체 생성, 카메라 위치 및 줌 결정
-                val cameraPosition = CameraPosition(
-                    LatLng(it.latitude, it.longitude),
-                    15.0
-                )
-                // 위치 오버레이 설정
-                val locationOverlay = naverMap.locationOverlay
-                locationOverlay.position = LatLng(it.latitude, it.longitude)
-
-                // 카메라 포지션 객체로 카메라 위치 업데이트
-                val cameraUpdate = CameraUpdate.toCameraPosition(cameraPosition)
-                naverMap.moveCamera(cameraUpdate)
-
-            }
-        }
-    }
-
-    /**
-     * 함수와 사용 불가능 상태가 되었을 때 호출
-     */
-    override fun onConnectionSuspended(p0: Int) {
-        naverMap.locationTrackingMode = LocationTrackingMode.None
-        Toast.makeText(this, "위치 정보를 얻는데 실패 했습니다", Toast.LENGTH_LONG).show()
-    }
-
-    /**
-     * 위치 정보 제공자를 얻지 못할때 호출
-     */
-    override fun onConnectionFailed(p0: ConnectionResult) {
-        naverMap.locationTrackingMode = LocationTrackingMode.None
-        Toast.makeText(this, "위치 정보를 얻는데 실패 했습니다", Toast.LENGTH_LONG).show()
-    }
-
-
 
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -268,7 +204,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRAFFIC, false)
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRANSIT, false)
 
-                bottomNavigationIndex = 1
 
                 //네이버 지도 UI 세팅
                 val uiSettings = naverMap.uiSettings
@@ -284,7 +219,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
             R.id.menu_bus -> {
 
-                bottomNavigationIndex = 2
 
                 // Toast 메시지 대량 생산을 막기 위한 코드
                 if (System.currentTimeMillis() - mToastWait >= 4000)    {
@@ -297,7 +231,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
             R.id.menu_menu1 -> {
 
-                bottomNavigationIndex = 3
                 val menuIntent = Intent(this, MenuActivity::class.java)
                 startActivity(menuIntent)
             }
@@ -343,10 +276,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         //지도 위치 표시
         naverMap.locationSource = locationSource
 
+        // FusedLocationClient 마지막 위치 불러오기
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            if (location != null)   {
+                val cameraUpdate = CameraUpdate.scrollTo(LatLng(location.latitude, location.longitude))
+                naverMap.moveCamera(cameraUpdate)
 
-        //지도 오버레이 활성화
-        val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
-        locationOverlay.isVisible = true                                                            // 오버레이 활성화
+                //지도 오버레이 활성화
+                val locationOverlay = naverMap.locationOverlay
+                locationOverlay.position = LatLng(location.latitude, location.longitude)
+                locationOverlay.isVisible = true
+
+                naverMap.locationTrackingMode = LocationTrackingMode.Follow
+
+
+            }
+
+            else    {
+                Toast.makeText(this, "${location}", Toast.LENGTH_LONG).show()
+            }
+        }
 
 
         //InfoWindow 내용구성 함수 실행
