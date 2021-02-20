@@ -19,8 +19,6 @@ import com.api.NubijaAPI
 import com.data.nubija.BikeStation
 import com.data.nubija.BikeStationResult
 import com.data.nubija.nubija
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -43,7 +41,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 
- @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
     //위치정보 멤버 변수 선언
@@ -170,6 +167,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
         override fun onPermissionDenied(deniedPermissions: ArrayList<String>?) {
             Toast.makeText(this@MainActivity, "위치 권한 거부됨", Toast.LENGTH_SHORT).show()
             naverMap.locationTrackingMode = LocationTrackingMode.None
+
+            infoWindowSetting()
+            fetchBikeStation()
+
         }
     }
 
@@ -301,10 +302,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
 
             }
-
-            else    {
-                Toast.makeText(this, "${location}", Toast.LENGTH_LONG).show()
-            }
+            
         }
 
 
