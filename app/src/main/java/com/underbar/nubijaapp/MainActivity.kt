@@ -7,11 +7,9 @@ import android.content.pm.PackageManager
 import android.content.res.AssetManager
 import android.location.Location
 import android.location.LocationManager
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -41,7 +39,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
+ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
     //위치정보 멤버 변수 선언
     private lateinit var locationSource: FusedLocationSource
@@ -58,9 +56,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
     // 시간측정을 토스트 메시지 겹침을 방지하기위한 시간 측정 함수
     private var mBackWait:Long = 0
-     private var mToastWait:Long = 0
 
-    //비트맵 오버레이
+    // 현재위치와 마커 사이의 거리, 현위치와 가까운 Top3 마커
+     // findNearestStation() 에서 사용됨
+    private val distances = mutableMapOf<Int, Double>()
+    private val nearestMarkers = mutableMapOf<Int, Int>()
+    private var botNavMenuBusCallCount = 0
 
 
     companion object    {
@@ -100,7 +101,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
 
     //메모리에 올라갔을때
-    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -240,14 +240,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
             R.id.menu_bus -> {
 
-
-                // Toast 메시지 대량 생산을 막기 위한 코드
-                if (System.currentTimeMillis() - mToastWait >= 4000)    {
-                    mToastWait = System.currentTimeMillis()
-                    Toast.makeText(this, "업데이트 준비중 입니다" , Toast.LENGTH_LONG).show()
-                }
-
-
+                // 최단직선거리 정류장 찾기
+                findNearestStation()
+                botNavMenuBusCallCount += 1
             }
 
             R.id.menu_menu1 -> {
@@ -322,7 +317,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
 
             }
-            
+
         }
 
 
@@ -762,7 +757,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
                 // 진동 효과
                 // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                 // vibrator.vibrate(50)
-                
+
                 infoWindow.close()
             }
         }
@@ -825,6 +820,91 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
             }
 
         }
+
+    }
+
+     private fun resetMarker()  {
+
+     }
+
+
+
+    //현재 위치에서 최단직선거리 정류장 찾기 메소드
+    private fun findNearestStation() {
+
+        // 최초 실행시( distances 가 비어 있을때 ) distances 초기화
+        if (distances.isEmpty())    {
+
+            // 현재 위치 불러오기 LatLng 형식
+            val currentLocation = naverMap.locationOverlay.position
+
+            for (marker in bikeStationResult.stations)  {
+                distances.put(marker.tmid, currentLocation.distanceTo(LatLng(marker.lat, marker.lng)))
+            }
+
+            for (index in 1..3)   {
+                for (tag in distances.keys)   {
+
+                    if (distances[tag] == distances.values.min()!!)    {
+                        nearestMarkers.put(index, tag)
+                        distances.remove(tag)
+                        break
+                    }
+
+
+                }
+
+
+            }
+        }
+
+        if (botNavMenuBusCallCount > 2) {
+            botNavMenuBusCallCount -= 3
+        }
+        val markerTag = nearestMarkers[botNavMenuBusCallCount+1]
+        //찾은 최단거리 마커 인포윈도우 띄우기
+        if (nubijaMarkerMap[markerTag] != null)  {
+            val marker = nubijaMarkerMap[markerTag]!!
+
+            // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
+            for (i in bikeStationResult.stations.indices)   {
+                if (markerTag == bikeStationResult.stations[i].tmid)  {
+
+                    // 서버로 부터 성공적으로 Parkcnt 받았을떄
+                    if (bikeStationResult.stations[i].park != "null")   {
+                        // 터미널이 가득 찬 경우 파란색 마커 표시
+                        if (bikeStationResult.stations[i].empty.toInt() == 0)    {
+                            marker.icon = blueMarkerOverlayImageClicked
+                        }
+
+                        else {
+                            when (bikeStationResult.stations[i].park.toInt()) {
+                                in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon =
+                                        greenMarkerOverlayImageClicked
+
+                                in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX -> marker.icon =
+                                        yellowMarkerOverlayImageClicked
+
+                                in MIN_RED_BIKE_INDEX until MAX_RED_BIKE_INDEX -> marker.icon =
+                                        redMarkerOverlayImageClicked
+
+                                else -> marker.icon =
+                                        grayMarkerOverlayImageClicked
+
+                            }
+                        }
+                    }
+
+                    // 통신에 실패해 Parkcnt 가 null 일때
+                    else    {
+                        marker.icon = grayMarkerOverlayImageClicked
+                    }
+                }
+            }
+            infoWindow.open(marker)
+        }
+
+
 
     }
 
