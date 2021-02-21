@@ -60,6 +60,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
     private var mBackWait:Long = 0
      private var mToastWait:Long = 0
 
+    //비트맵 오버레이
+
 
     companion object    {
         private const val LOCATION_PERMISSION_CODE = 1000
@@ -74,6 +76,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
         private const val MAX_GREEN_BIKE_INDEX = 100
         private const val MIN_GREEN_BIKE_INDEX = 10
+
+        // 마커 이미지 결정
+        private val redMarkerOverlayImage = OverlayImage.fromResource(R.drawable.ic_bike_red)
+        private val redMarkerOverlayImageClicked = OverlayImage.fromResource(R.drawable.ic_bike_red_clicked)
+
+        private val yellowMarkerOverlayImage = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+        private val yellowMarkerOverlayImageClicked = OverlayImage.fromResource(R.drawable.ic_bike_yellow_clicked)
+
+        private val greenMarkerOverlayImage = OverlayImage.fromResource(R.drawable.ic_bike_green)
+        private val greenMarkerOverlayImageClicked = OverlayImage.fromResource(R.drawable.ic_bike_green_clicked)
+
+        private val blueMarkerOverlayImage = OverlayImage.fromResource(R.drawable.ic_bike_blue)
+        private val blueMarkerOverlayImageClicked = OverlayImage.fromResource(R.drawable.ic_bike_blue_clicked)
+
+        private val grayMarkerOverlayImage = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+        private val grayMarkerOverlayImageClicked = OverlayImage.fromResource(R.drawable.ic_bike_gray_clicked)
+
+
     }
 
 
@@ -472,15 +492,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
                      // 터미널이 가득 찬 경우 파란색 마커 표시
                      if (bikestations.empty.toInt() == 0)    {
-                         marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
+                         marker.icon = blueMarkerOverlayImage
                      }
 
                      else   {
                          when(bikestations.park.toInt())   {
-                             in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                             in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                             in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                             else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                             in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = greenMarkerOverlayImage
+                             in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = yellowMarkerOverlayImage
+                             in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = redMarkerOverlayImage
+                             else           -> marker.icon = grayMarkerOverlayImage
                          }
                      }
 
@@ -488,7 +508,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
                  // 서버와 통신 문제로 주차 가능 댓수가 null 이면
                  else   {
-                     marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                     marker.icon = grayMarkerOverlayImage
                  }
 
 
@@ -529,22 +549,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
                         // 터미널이 가득 찬 경우 파란색 마커 표시
                         if (bikeStationResult.stations[i].empty.toInt() == 0)    {
-                            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
+                            marker.icon = blueMarkerOverlayImage
                         }
 
                         else   {
                             when(bikeStationResult.stations[i].park.toInt())   {
-                                in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                                in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                                in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                                else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                                in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = greenMarkerOverlayImage
+                                in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = yellowMarkerOverlayImage
+                                in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = redMarkerOverlayImage
+                                else           -> marker.icon = grayMarkerOverlayImage
                             }
                         }
                     }
 
                     // 통신에 실패해 Parkcnt 가 null 일때
                     else    {
-                        marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                        marker.icon = grayMarkerOverlayImage
                     }
                 }
             }
@@ -559,6 +579,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
             // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
             for (i in bikeStationResult.stations.indices)   {
+
                 if (vno == bikeStationResult.stations[i].tmid)  {
 
                     // 서버로 부터 성공적으로 Parkcnt 받았을떄
@@ -566,23 +587,27 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
                         // 터미널이 가득 찬 경우 파란색 마커 표시
                         if (bikeStationResult.stations[i].empty.toInt() == 0) {
-                            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
+                            marker.icon = blueMarkerOverlayImage
                         } else {
                             when (bikeStationResult.stations[i].park.toInt()) {
                                 in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon =
-                                    OverlayImage.fromResource(R.drawable.ic_bike_green)
+                                    greenMarkerOverlayImage
+
                                 in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX -> marker.icon =
-                                    OverlayImage.fromResource(R.drawable.ic_bike_yellow)
+                                    yellowMarkerOverlayImage
+
                                 in MIN_RED_BIKE_INDEX until MAX_RED_BIKE_INDEX -> marker.icon =
-                                    OverlayImage.fromResource(R.drawable.ic_bike_red)
+                                    redMarkerOverlayImage
+
                                 else -> marker.icon =
-                                    OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                                    grayMarkerOverlayImage
+
                             }
                         }
                     }
                     // 통신에 실패해 Parkcnt 가 null 일때
                     else    {
-                        marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                        marker.icon = grayMarkerOverlayImage
                     }
                 }
 
@@ -596,30 +621,41 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
             for (i in bikeStationResult.stations.indices)   {
                 if (vno == bikeStationResult.stations[i].tmid)  {
 
+                    // 해당 마커를 애니매이션 효과와 함께 가운데 정렬
+                    val location = LatLng(bikeStationResult.stations[i].lat, bikeStationResult.stations[i].lng)
+                    val cameraUpdate = CameraUpdate.scrollTo(location)
+                            .animate(CameraAnimation.Easing)
+                    naverMap.moveCamera(cameraUpdate)
+
+
                     // 서버로 부터 성공적으로 Parkcnt 받았을떄
                     if (bikeStationResult.stations[i].park != "null")   {
                         // 터미널이 가득 찬 경우 파란색 마커 표시
                         if (bikeStationResult.stations[i].empty.toInt() == 0)    {
-                            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue_clicked)
+                            marker.icon = blueMarkerOverlayImageClicked
                         }
 
                         else {
                             when (bikeStationResult.stations[i].park.toInt()) {
                                 in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon =
-                                    OverlayImage.fromResource(R.drawable.ic_bike_green_clicked)
+                                    greenMarkerOverlayImageClicked
+
                                 in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX -> marker.icon =
-                                    OverlayImage.fromResource(R.drawable.ic_bike_yellow_clicked)
+                                    yellowMarkerOverlayImageClicked
+
                                 in MIN_RED_BIKE_INDEX until MAX_RED_BIKE_INDEX -> marker.icon =
-                                    OverlayImage.fromResource(R.drawable.ic_bike_red_clicked)
+                                    redMarkerOverlayImageClicked
+
                                 else -> marker.icon =
-                                    OverlayImage.fromResource(R.drawable.ic_bike_gray_clicked)
+                                    grayMarkerOverlayImageClicked
+
                             }
                         }
                     }
 
                     // 통신에 실패해 Parkcnt 가 null 일때
                     else    {
-                        marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray_clicked)
+                        marker.icon = grayMarkerOverlayImageClicked
                     }
                 }
             }
@@ -637,14 +673,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
             for (marker in nubijaMarkerMap.values) {
                 marker.map = null
             }
-        }
-    }
-
-
-    // 바텀 네비게이션 클릭시 지도에서 마커 없앨때 사용
-    private fun clearMarker() {
-        for (marker in nubijaMarkerMap.values) {
-            marker.map = null
         }
     }
 
@@ -667,22 +695,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
                         if (bikeStationResult.stations[i].park != "null")   {
                             // 터미널이 가득 찬 경우 파란색 마커 표시
                             if (bikeStationResult.stations[i].empty.toInt() == 0)    {
-                                marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
+                                marker.icon = blueMarkerOverlayImage
                             }
 
                             else   {
                                 when(bikeStationResult.stations[i].park.toInt())   {
-                                    in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                                    in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                                    in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                                    else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                                    in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = greenMarkerOverlayImage
+                                    in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = yellowMarkerOverlayImage
+                                    in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = redMarkerOverlayImage
+                                    else           -> marker.icon = grayMarkerOverlayImage
                                 }
                             }
                         }
 
                         // 통신에 실패해 Parkcnt 가 null 일때
                         else    {
-                            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                            marker.icon = grayMarkerOverlayImage
                         }
                     }
                 }
@@ -711,22 +739,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
 
                             // 터미널이 가득 찬 경우 파란색 마커 표시
                             if (bikeStationResult.stations[i].empty.toInt() == 0)    {
-                                marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_blue)
+                                marker.icon = blueMarkerOverlayImage
                             }
                             // 아닐 경우 대여 가능 대수에 따른 색깔 부여
                             else   {
                                 when(bikeStationResult.stations[i].park.toInt())   {
-                                    in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_green)
-                                    in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_yellow)
-                                    in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_red)
-                                    else           -> marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                                    in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = greenMarkerOverlayImage
+                                    in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = yellowMarkerOverlayImage
+                                    in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = redMarkerOverlayImage
+                                    else           -> marker.icon = grayMarkerOverlayImage
                                 }
                             }
                         }
 
                         // 통신에 실패해 Parkcnt 가 null 일때
                         else    {
-                            marker.icon = OverlayImage.fromResource(R.drawable.ic_bike_gray)
+                            marker.icon = grayMarkerOverlayImage
                         }
                     }
                 }
@@ -736,6 +764,51 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback    {
                 // vibrator.vibrate(50)
                 
                 infoWindow.close()
+            }
+        }
+
+        // 지도가 스크롤 됬을때 -> InfoWindow 닫기
+        naverMap.addOnCameraChangeListener { reason, animate ->
+            if (reason == CameraUpdate.REASON_GESTURE)  {
+                if (infoWindow.isAdded) {
+                    val marker = infoWindow.marker!!
+                    val vno = marker.tag.toString().toInt()
+
+                    // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
+                    for (i in bikeStationResult.stations.indices)   {
+                        if (vno == bikeStationResult.stations[i].tmid)  {
+
+                            // 서버로 부터 성공적으로 Parkcnt 받았을떄
+                            if (bikeStationResult.stations[i].park != "null")   {
+
+                                // 터미널이 가득 찬 경우 파란색 마커 표시
+                                if (bikeStationResult.stations[i].empty.toInt() == 0)    {
+                                    marker.icon = blueMarkerOverlayImage
+                                }
+                                // 아닐 경우 대여 가능 대수에 따른 색깔 부여
+                                else   {
+                                    when(bikeStationResult.stations[i].park.toInt())   {
+                                        in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = greenMarkerOverlayImage
+                                        in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = yellowMarkerOverlayImage
+                                        in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = redMarkerOverlayImage
+                                        else           -> marker.icon = grayMarkerOverlayImage
+                                    }
+                                }
+                            }
+
+                            // 통신에 실패해 Parkcnt 가 null 일때
+                            else    {
+                                marker.icon = grayMarkerOverlayImage
+                            }
+                        }
+                    }
+
+                    // 진동 효과
+                    // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                    // vibrator.vibrate(50)
+
+                    infoWindow.close()
+                }
             }
         }
         infoWindow.adapter = object : InfoWindow.DefaultTextAdapter(applicationContext) {
