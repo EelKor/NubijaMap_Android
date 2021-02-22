@@ -236,6 +236,11 @@ import retrofit2.converter.gson.GsonConverterFactory
                 locationOverlay.isVisible = true                                                            // 오버레이 활성화
                 visualMarker()
 
+                // 인포 윈도우 열여 있다면, 닫기
+                if (infoWindow.isAdded) {
+                    infoWindow.close()
+                }
+
             }
 
             R.id.menu_bus -> {
@@ -722,42 +727,8 @@ import retrofit2.converter.gson.GsonConverterFactory
         naverMap.setOnMapClickListener { pointF, latLng ->
 
             if (infoWindow.isAdded) {
-                val marker = infoWindow.marker!!
-                val vno = marker.tag.toString().toInt()
 
-                // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
-                for (i in bikeStationResult.stations.indices)   {
-                    if (vno == bikeStationResult.stations[i].tmid)  {
-
-                        // 서버로 부터 성공적으로 Parkcnt 받았을떄
-                        if (bikeStationResult.stations[i].park != "null")   {
-
-                            // 터미널이 가득 찬 경우 파란색 마커 표시
-                            if (bikeStationResult.stations[i].empty.toInt() == 0)    {
-                                marker.icon = blueMarkerOverlayImage
-                            }
-                            // 아닐 경우 대여 가능 대수에 따른 색깔 부여
-                            else   {
-                                when(bikeStationResult.stations[i].park.toInt())   {
-                                    in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = greenMarkerOverlayImage
-                                    in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = yellowMarkerOverlayImage
-                                    in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = redMarkerOverlayImage
-                                    else           -> marker.icon = grayMarkerOverlayImage
-                                }
-                            }
-                        }
-
-                        // 통신에 실패해 Parkcnt 가 null 일때
-                        else    {
-                            marker.icon = grayMarkerOverlayImage
-                        }
-                    }
-                }
-
-                // 진동 효과
-                // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                // vibrator.vibrate(50)
-
+                visualMarker()
                 infoWindow.close()
             }
         }
@@ -766,46 +737,16 @@ import retrofit2.converter.gson.GsonConverterFactory
         naverMap.addOnCameraChangeListener { reason, animate ->
             if (reason == CameraUpdate.REASON_GESTURE)  {
                 if (infoWindow.isAdded) {
-                    val marker = infoWindow.marker!!
-                    val vno = marker.tag.toString().toInt()
-
-                    // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
-                    for (i in bikeStationResult.stations.indices)   {
-                        if (vno == bikeStationResult.stations[i].tmid)  {
-
-                            // 서버로 부터 성공적으로 Parkcnt 받았을떄
-                            if (bikeStationResult.stations[i].park != "null")   {
-
-                                // 터미널이 가득 찬 경우 파란색 마커 표시
-                                if (bikeStationResult.stations[i].empty.toInt() == 0)    {
-                                    marker.icon = blueMarkerOverlayImage
-                                }
-                                // 아닐 경우 대여 가능 대수에 따른 색깔 부여
-                                else   {
-                                    when(bikeStationResult.stations[i].park.toInt())   {
-                                        in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon = greenMarkerOverlayImage
-                                        in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX  ->  marker.icon = yellowMarkerOverlayImage
-                                        in MIN_RED_BIKE_INDEX until  MAX_RED_BIKE_INDEX  ->  marker.icon = redMarkerOverlayImage
-                                        else           -> marker.icon = grayMarkerOverlayImage
-                                    }
-                                }
-                            }
-
-                            // 통신에 실패해 Parkcnt 가 null 일때
-                            else    {
-                                marker.icon = grayMarkerOverlayImage
-                            }
-                        }
+                        visualMarker()
+                        infoWindow.close()
                     }
 
                     // 진동 효과
                     // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                     // vibrator.vibrate(50)
-
-                    infoWindow.close()
-                }
             }
         }
+
         infoWindow.adapter = object : InfoWindow.DefaultTextAdapter(applicationContext) {
             override fun getText(infoWindow: InfoWindow): CharSequence {
                val tag = infoWindow.marker?.tag.toString()
@@ -822,11 +763,6 @@ import retrofit2.converter.gson.GsonConverterFactory
         }
 
     }
-
-     private fun resetMarker()  {
-
-     }
-
 
 
     //현재 위치에서 최단직선거리 정류장 찾기 메소드
