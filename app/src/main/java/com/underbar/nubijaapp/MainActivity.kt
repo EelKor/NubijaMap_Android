@@ -141,6 +141,8 @@ import retrofit2.converter.gson.GsonConverterFactory
                 .setPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
                 .check()
 
+
+
     }
 
     private val permissionListener = object : PermissionListener {
@@ -172,7 +174,7 @@ import retrofit2.converter.gson.GsonConverterFactory
                     uiSettings.isLocationButtonEnabled = false
                     uiSettings.isZoomControlEnabled = false
 
-                    //지도 오버레이 활성화
+                    //지도 오버레이 비활성화
                     val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
                     locationOverlay.isVisible = false                                                            // 오버레이 활성화
                 }
@@ -185,16 +187,13 @@ import retrofit2.converter.gson.GsonConverterFactory
         }
 
         override fun onPermissionDenied(deniedPermissions: ArrayList<String>?) {
-            Toast.makeText(this@MainActivity, "위치 권한 거부됨", Toast.LENGTH_SHORT).show()
-            naverMap.locationTrackingMode = LocationTrackingMode.None
 
+            // 구글 정책상 최소 사용
             infoWindowSetting()
             fetchBikeStation()
 
         }
     }
-
-
 
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -231,9 +230,7 @@ import retrofit2.converter.gson.GsonConverterFactory
                 uiSettings.isLocationButtonEnabled = true
                 uiSettings.isZoomControlEnabled = false
 
-                //지도 오버레이 활성화
-                val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
-                locationOverlay.isVisible = true                                                            // 오버레이 활성화
+                // 마커 새로고침
                 visualMarker()
 
                 // 인포 윈도우 열여 있다면, 닫기
@@ -245,9 +242,20 @@ import retrofit2.converter.gson.GsonConverterFactory
 
             R.id.menu_bus -> {
 
-                // 최단직선거리 정류장 찾기
-                findNearestStation()
-                botNavMenuBusCallCount += 1
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)   {
+                    Toast.makeText(this, "주변 정류장 찾기 기능을 이용하기 위해 위치 권한을 허용해 주세요 :)", Toast.LENGTH_SHORT).show()
+                }
+
+                else    {
+                    if (nubijaMarkerMap.isNotEmpty())   {
+                        
+                        // 내 위치 조회
+                        naverMap.locationTrackingMode = LocationTrackingMode.Follow
+                        // 최단직선거리 정류장 찾기
+                        findNearestStation()
+                        botNavMenuBusCallCount += 1
+                    }
+                }
             }
 
             R.id.menu_menu1 -> {
@@ -294,6 +302,10 @@ import retrofit2.converter.gson.GsonConverterFactory
         uiSettings.isLocationButtonEnabled = true
         uiSettings.isZoomControlEnabled = false
 
+        //InfoWindow 내용구성 함수 실행
+        infoWindowSetting()
+        fetchBikeStation()
+
         //지도 위치 표시
         naverMap.locationSource = locationSource
 
@@ -324,11 +336,6 @@ import retrofit2.converter.gson.GsonConverterFactory
             }
 
         }
-
-
-        //InfoWindow 내용구성 함수 실행
-        infoWindowSetting()
-        fetchBikeStation()
 
     }
 
