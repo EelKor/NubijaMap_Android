@@ -187,16 +187,13 @@ import retrofit2.converter.gson.GsonConverterFactory
         }
 
         override fun onPermissionDenied(deniedPermissions: ArrayList<String>?) {
-            Toast.makeText(this@MainActivity, "위치 권한 거부됨", Toast.LENGTH_SHORT).show()
-            naverMap.locationTrackingMode = LocationTrackingMode.None
 
+            // 구글 정책상 최소 사용
             infoWindowSetting()
             fetchBikeStation()
 
         }
     }
-
-
 
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -221,10 +218,6 @@ import retrofit2.converter.gson.GsonConverterFactory
         // 하단 내비게이션 바 버튼이 클릭 됬을때 실행할 동작
         when(it.itemId){
             menu_bike -> {
-                if (nubijaMarkerMap.isEmpty())  {
-                    infoWindowSetting()
-                    fetchBikeStation()
-                }
 
                 // 자전거 지도로 지도 옵션 변경
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, true)
@@ -237,9 +230,7 @@ import retrofit2.converter.gson.GsonConverterFactory
                 uiSettings.isLocationButtonEnabled = true
                 uiSettings.isZoomControlEnabled = false
 
-                //지도 오버레이 활성화
-                val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
-                locationOverlay.isVisible = true                                                            // 오버레이 활성화
+                // 마커 새로고침
                 visualMarker()
 
                 // 인포 윈도우 열여 있다면, 닫기
@@ -251,11 +242,17 @@ import retrofit2.converter.gson.GsonConverterFactory
 
             R.id.menu_bus -> {
 
-                if (nubijaMarkerMap.isNotEmpty())   {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)   {
+                    Toast.makeText(this, "주변 정류장 찾기 기능을 이용하기 위해 위치 권한을 허용해 주세요 :)", Toast.LENGTH_SHORT).show()
+                }
 
-                    // 최단직선거리 정류장 찾기
-                    findNearestStation()
-                    botNavMenuBusCallCount += 1
+                else    {
+                    if (nubijaMarkerMap.isNotEmpty())   {
+
+                        // 최단직선거리 정류장 찾기
+                        findNearestStation()
+                        botNavMenuBusCallCount += 1
+                    }
                 }
             }
 
