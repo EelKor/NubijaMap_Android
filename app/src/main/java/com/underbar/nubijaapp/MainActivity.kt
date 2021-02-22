@@ -141,6 +141,8 @@ import retrofit2.converter.gson.GsonConverterFactory
                 .setPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
                 .check()
 
+
+
     }
 
     private val permissionListener = object : PermissionListener {
@@ -219,6 +221,10 @@ import retrofit2.converter.gson.GsonConverterFactory
         // 하단 내비게이션 바 버튼이 클릭 됬을때 실행할 동작
         when(it.itemId){
             menu_bike -> {
+                if (nubijaMarkerMap.isEmpty())  {
+                    infoWindowSetting()
+                    fetchBikeStation()
+                }
 
                 // 자전거 지도로 지도 옵션 변경
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, true)
@@ -245,9 +251,12 @@ import retrofit2.converter.gson.GsonConverterFactory
 
             R.id.menu_bus -> {
 
-                // 최단직선거리 정류장 찾기
-                findNearestStation()
-                botNavMenuBusCallCount += 1
+                if (nubijaMarkerMap.isNotEmpty())   {
+
+                    // 최단직선거리 정류장 찾기
+                    findNearestStation()
+                    botNavMenuBusCallCount += 1
+                }
             }
 
             R.id.menu_menu1 -> {
@@ -294,6 +303,10 @@ import retrofit2.converter.gson.GsonConverterFactory
         uiSettings.isLocationButtonEnabled = true
         uiSettings.isZoomControlEnabled = false
 
+        //InfoWindow 내용구성 함수 실행
+        infoWindowSetting()
+        fetchBikeStation()
+
         //지도 위치 표시
         naverMap.locationSource = locationSource
 
@@ -324,11 +337,6 @@ import retrofit2.converter.gson.GsonConverterFactory
             }
 
         }
-
-
-        //InfoWindow 내용구성 함수 실행
-        infoWindowSetting()
-        fetchBikeStation()
 
     }
 
