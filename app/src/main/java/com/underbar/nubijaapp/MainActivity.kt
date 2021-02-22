@@ -174,7 +174,7 @@ import retrofit2.converter.gson.GsonConverterFactory
                     uiSettings.isLocationButtonEnabled = false
                     uiSettings.isZoomControlEnabled = false
 
-                    //지도 오버레이 활성화
+                    //지도 오버레이 비활성화
                     val locationOverlay = naverMap.locationOverlay                                              // 오버레이 객체 선언
                     locationOverlay.isVisible = false                                                            // 오버레이 활성화
                 }
@@ -248,7 +248,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 
                 else    {
                     if (nubijaMarkerMap.isNotEmpty())   {
-
+                        
+                        // 내 위치 조회
+                        naverMap.locationTrackingMode = LocationTrackingMode.Follow
                         // 최단직선거리 정류장 찾기
                         findNearestStation()
                         botNavMenuBusCallCount += 1
