@@ -679,6 +679,16 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     // 바텀 네비게이션 클릭시 마커 재생성 때 사용
     private fun visualMarker() {
+
+        // 순서 제어 변수 초기화 - findNearestStation() 에서 사용
+        botNavMenuBusCallCount = 0
+
+        // InfoWindow 가 있으면 끄기
+        if (infoWindow.isAdded) {
+            infoWindow.close()
+        }
+
+        // 누비자 맵 마커 데이터가 비어있으면 생성
         if (nubijaMarkerMap.isEmpty()) {
             fetchBikeStation()
         }
@@ -686,6 +696,9 @@ import retrofit2.converter.gson.GsonConverterFactory
         else {
             for (marker in nubijaMarkerMap.values) {
                 val vno = marker.tag.toString().toInt()
+
+                // 마커 캡션 모두 지우기
+                marker.captionText = ""
 
                 // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
                 for (i in bikeStationResult.stations.indices)   {
@@ -769,7 +782,6 @@ import retrofit2.converter.gson.GsonConverterFactory
     private fun findNearestStation() {
 
         // 최초 실행시( distances 가 비어 있을때 ) distances 초기화
-        if (distances.isEmpty())    {
 
             // 현재 위치 불러오기 LatLng 형식
             val currentLocation = naverMap.locationOverlay.position
@@ -792,15 +804,23 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 
             }
-        }
 
         if (botNavMenuBusCallCount > 2) {
             botNavMenuBusCallCount -= 3
         }
+
         val markerTag = nearestMarkers[botNavMenuBusCallCount+1]
         //찾은 최단거리 마커 인포윈도우 띄우기
         if (nubijaMarkerMap[markerTag] != null)  {
             val marker = nubijaMarkerMap[markerTag]!!
+
+            // 마커에 캡션 추가 - 가까운 순으로
+            when (botNavMenuBusCallCount+1) {
+                1 -> marker.captionText = "1st"
+                2 -> marker.captionText = "2nd"
+                3 -> marker.captionText = "3rd"
+                else -> marker.captionText = ""
+            }
 
             // bikeStationResult 안 마커 태그가 일치하는 BikeStaion 객체 불러옴
             for (i in bikeStationResult.stations.indices)   {
