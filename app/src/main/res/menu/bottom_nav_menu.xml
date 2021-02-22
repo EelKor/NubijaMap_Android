@@ -8,13 +8,13 @@
 
     <item
         android:id="@+id/menu_bus"
-        android:title="즐겨찾기"
+        android:title="주변 정류장"
         android:icon="@drawable/ic_baseline_favoriate"
         />
 
     <item
         android:id="@+id/menu_menu1"
-        android:title="빈메뉴"
+        android:title="메뉴"
         android:icon="@drawable/ic_baseline_menu"
         />
 
