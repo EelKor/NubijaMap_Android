@@ -1,7 +1,6 @@
  package com.underbar.nubijaapp
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.AssetManager
@@ -148,7 +147,7 @@ import retrofit2.converter.gson.GsonConverterFactory
     private val permissionListener = object : PermissionListener {
         override fun onPermissionGranted() {
 
-            val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
             // 권한은 허용 되었으나 위치 설정이 꺼저있을때 위치 설정 페이지로 이동
             if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))  {
@@ -186,13 +185,12 @@ import retrofit2.converter.gson.GsonConverterFactory
 
         }
 
-        override fun onPermissionDenied(deniedPermissions: ArrayList<String>?) {
-
+        override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
             // 구글 정책상 최소 사용
             infoWindowSetting()
             fetchBikeStation()
-
         }
+
     }
 
 
@@ -800,7 +798,7 @@ import retrofit2.converter.gson.GsonConverterFactory
             for (index in 1..3)   {
                 for (tag in distances.keys)   {
 
-                    if (distances[tag] == distances.values.min()!!)    {
+                    if (distances[tag] == distances.values.minOrNull()!!)    {
                         nearestMarkers.put(index, tag)
                         distances.remove(tag)
                         break
