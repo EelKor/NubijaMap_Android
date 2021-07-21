@@ -1,13 +1,19 @@
  package com.underbar.nubijaapp
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.AssetManager
 import android.location.Location
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.Settings
+import android.view.View
+import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -62,7 +68,7 @@ import retrofit2.converter.gson.GsonConverterFactory
     private val nearestMarkers = mutableMapOf<Int, Int>()
     private var botNavMenuBusCallCount = 0
 
-
+    // 전역변수 선언
     companion object    {
         private const val LOCATION_PERMISSION_CODE = 1000
         private const val NUBIJA_API_SERVER_URL = "http://api.lessnas.me"
@@ -111,6 +117,9 @@ import retrofit2.converter.gson.GsonConverterFactory
         //Id값의 옵션에 접근
         val bottom_nav : BottomNavigationView = findViewById(R.id.bottom_nav)
         bottom_nav.setOnNavigationItemSelectedListener(onBottomNavItemSelectedListener)
+
+        val update_btn : Button = findViewById(R.id.button2)
+        update_btn.setOnClickListener(onUpdateBtnClickedListener)
 
 
 
@@ -193,10 +202,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     }
 
-
+    // 권한 허용하지 않았을떄 작동 되는 함수
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-
-
         if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults))  {
             if (locationSource.isActivated) {   //권한 거부됨
                 naverMap.locationTrackingMode = LocationTrackingMode.None
@@ -208,9 +215,13 @@ import retrofit2.converter.gson.GsonConverterFactory
     }
 
 
+    // #############################################################################################
+    // ###################################  레이 아웃 섹션  ###########################################
+    // #############################################################################################
+    // 여기서 부터는 레이 아웃 작동 코드
+    // onCreate() 에서 FindViewById 객체 생성후 사용
 
-
-    //바텀 내비게이션 아이템이 눌러졌을때
+    // 1. 바텀 내비게이션 아이템이 눌러졌을때
      private val onBottomNavItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener {
         //스위치 문
         // 하단 내비게이션 바 버튼이 클릭 됬을때 실행할 동작
@@ -267,7 +278,7 @@ import retrofit2.converter.gson.GsonConverterFactory
     }
 
 
-    // 뒤로가기 버튼 이 눌러졌을때
+    // 2. 뒤로가기 버튼 이 눌러졌을때
     override fun onBackPressed() {
 
         //뒤로가기 2번 누를때 종료 기능 구현
@@ -281,6 +292,16 @@ import retrofit2.converter.gson.GsonConverterFactory
             finish()
         }
     }
+
+    // 3. 업데이트 버튼이 눌러졌을때
+    private val onUpdateBtnClickedListener = View.OnClickListener {
+        Toast.makeText(this,"업데이트 버튼 클릭됨", Toast.LENGTH_SHORT).show()
+    }
+
+    // #############################################################################################
+    // #############################################################################################
+
+
 
     // mapFragment.getMapAsync(this) 에 의해 호출됨
     override fun onMapReady(naverMap: NaverMap) {
@@ -353,7 +374,7 @@ import retrofit2.converter.gson.GsonConverterFactory
                     call: Call<List<nubija>>,
                     response: Response<List<nubija>>
             ) {
-                    if (response.body() != null) {
+                if (response.body() != null) {
 
                         Toast.makeText(this@MainActivity, "실시간 터미널 현황은 실제와 차이가 있을수 있습니다", Toast.LENGTH_SHORT).show()
                         val rawdata: List<nubija> = response.body()!!
@@ -387,9 +408,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 
                         }
 
-                        bikeStationResult = BikeStationResult(bikeStationlists)
-                        updateMapMarker(bikeStationResult)
-
                     }
                 else    {
                         Toast.makeText(this@MainActivity, "서버로 부터 데이터를 받아오는데 실패 했습니다", Toast.LENGTH_LONG).show()
@@ -413,10 +431,11 @@ import retrofit2.converter.gson.GsonConverterFactory
                             bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
 
                         }
-                        bikeStationResult = BikeStationResult(bikeStationlists)
-                        updateMapMarker(bikeStationResult)
 
                 }
+
+                bikeStationResult = BikeStationResult(bikeStationlists)
+                updateMapMarker(bikeStationResult)
 
 
             }
@@ -531,13 +550,20 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     }
 
-
     // 마커가 클릭되면 호출 됨
     private val listener = Overlay.OnClickListener {overlay ->
 
         // 진동 효과
-        // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        //vibrator.vibrate(50)
+        val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+        // 진동 효과 버전 확인
+        val vibrationEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            VibrationEffect.createOneShot(10, 50)
+        } else {
+            TODO("VERSION.SDK_INT < O")
+        }
+
+        vibrator.vibrate(vibrationEffect)
 
         // 마커 초기화
         for (marker in nubijaMarkerMap.values) {
@@ -671,8 +697,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     }
 
-
-
+    // 누비자 마커 리스트 초기화
     private fun resetNubijaMarkerList(){
         if (nubijaMarkerMap.isEmpty() ) {
             for (marker in nubijaMarkerMap.values) {
@@ -680,7 +705,6 @@ import retrofit2.converter.gson.GsonConverterFactory
             }
         }
     }
-
 
     // 바텀 네비게이션 클릭시 마커 재생성 때 사용
     private fun visualMarker() {
@@ -781,7 +805,6 @@ import retrofit2.converter.gson.GsonConverterFactory
         }
 
     }
-
 
     //현재 위치에서 최단직선거리 정류장 찾기 메소드
     private fun findNearestStation() {
