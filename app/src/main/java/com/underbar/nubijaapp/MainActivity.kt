@@ -17,6 +17,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import com.api.NubijaAPI
 import com.data.nubija.BikeStation
@@ -61,6 +62,8 @@ import retrofit2.converter.gson.GsonConverterFactory
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
     // 시간측정을 토스트 메시지 겹침을 방지하기위한 시간 측정 함수
     private var mBackWait:Long = 0
+    // 최근 업데이트 시간
+    private var recentUpdate:Long = 0
 
     // 현재위치와 마커 사이의 거리, 현위치와 가까운 Top3 마커
      // findNearestStation() 에서 사용됨
@@ -103,8 +106,6 @@ import retrofit2.converter.gson.GsonConverterFactory
     }
 
 
-
-
     //메모리에 올라갔을때
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,7 +119,7 @@ import retrofit2.converter.gson.GsonConverterFactory
         val bottom_nav : BottomNavigationView = findViewById(R.id.bottom_nav)
         bottom_nav.setOnNavigationItemSelectedListener(onBottomNavItemSelectedListener)
 
-        val update_btn : Button = findViewById(R.id.button2)
+        val update_btn : Button = findViewById(R.id.updatebtn)
         update_btn.setOnClickListener(onUpdateBtnClickedListener)
 
 
@@ -223,6 +224,17 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     // 1. 바텀 내비게이션 아이템이 눌러졌을때
      private val onBottomNavItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener {
+        // 진동 효과
+        val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+        // 진동 효과 버전 확인
+        val vibrationEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            VibrationEffect.createOneShot(10, 150)
+        } else {
+            TODO("VERSION.SDK_INT < O")
+        }
+        vibrator.vibrate(vibrationEffect)
+
         //스위치 문
         // 하단 내비게이션 바 버튼이 클릭 됬을때 실행할 동작
         when(it.itemId){
@@ -295,8 +307,22 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     // 3. 업데이트 버튼이 눌러졌을때
     private val onUpdateBtnClickedListener = View.OnClickListener {
-        Toast.makeText(this,"업데이트 버튼 클릭됨", Toast.LENGTH_SHORT).show()
+
+
+        if (System.currentTimeMillis() - recentUpdate >= 60000){
+            recentUpdate = System.currentTimeMillis()
+            Toast.makeText(this,"터미널 정보 업데이트 완료", Toast.LENGTH_SHORT).show()
+            fetchBikeStation()
+        }
+
+        else    {
+            recentUpdate = System.currentTimeMillis()
+            Toast.makeText(this,"잠시후 업데이트가 가능합니다", Toast.LENGTH_SHORT).show()
+        }
+
     }
+
+
 
     // #############################################################################################
     // #############################################################################################
@@ -376,7 +402,6 @@ import retrofit2.converter.gson.GsonConverterFactory
             ) {
                 if (response.body() != null) {
 
-                        Toast.makeText(this@MainActivity, "실시간 터미널 현황은 실제와 차이가 있을수 있습니다", Toast.LENGTH_SHORT).show()
                         val rawdata: List<nubija> = response.body()!!
 
                         // 좌표값 불러오기
@@ -558,11 +583,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 
         // 진동 효과 버전 확인
         val vibrationEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            VibrationEffect.createOneShot(10, 50)
+            VibrationEffect.createOneShot(10, 150)
         } else {
             TODO("VERSION.SDK_INT < O")
         }
-
         vibrator.vibrate(vibrationEffect)
 
         // 마커 초기화
@@ -892,6 +916,5 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     }
 
+ }
 
-
-}
