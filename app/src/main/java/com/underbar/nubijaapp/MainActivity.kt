@@ -307,8 +307,19 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     // 3. 업데이트 버튼이 눌러졌을때
     private val onUpdateBtnClickedListener = View.OnClickListener {
+        // 진동 효과
+        val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
+        // 진동 효과 버전 확인
+        val vibrationEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            VibrationEffect.createOneShot(10, 150)
+        } else {
+            TODO("VERSION.SDK_INT < O")
+        }
+        vibrator.vibrate(vibrationEffect)
 
+        // 버튼이 눌러진 시간 확인
+        // 1분에 한번씩만 업데이트 가능
         if (System.currentTimeMillis() - recentUpdate >= 60000){
             recentUpdate = System.currentTimeMillis()
             Toast.makeText(this,"터미널 정보 업데이트 완료", Toast.LENGTH_SHORT).show()

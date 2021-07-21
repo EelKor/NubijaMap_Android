@@ -27,18 +27,22 @@
 
 
 </FrameLayout>
+
     <Button
         android:id="@+id/updatebtn"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_above="@id/bottom_nav"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_marginHorizontal="20dp"
-        android:layout_marginVertical="20dp"
 
+        android:layout_marginVertical="20dp"
         android:background="@drawable/button_shape"
         android:drawableTop="@drawable/ic_refresh"
-        android:layout_alignParentEnd="true" />
+        android:paddingHorizontal="9dp"
+        android:paddingVertical="9dp"
+        />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
     android:id="@+id/bottom_nav"
