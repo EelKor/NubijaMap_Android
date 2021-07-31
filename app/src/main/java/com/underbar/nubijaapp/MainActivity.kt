@@ -17,7 +17,6 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
 import com.api.NubijaAPI
 import com.data.nubija.BikeStation
@@ -62,6 +61,8 @@ import retrofit2.converter.gson.GsonConverterFactory
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
     // 시간측정을 토스트 메시지 겹침을 방지하기위한 시간 측정 함수
     private var mBackWait:Long = 0
+    private var mUpdateWait: Long = 0
+
     // 최근 업데이트 시간
     private var recentUpdate:Long = 0
 
@@ -323,12 +324,17 @@ import retrofit2.converter.gson.GsonConverterFactory
         if (System.currentTimeMillis() - recentUpdate >= 60000){
             recentUpdate = System.currentTimeMillis()
             Toast.makeText(this,"터미널 정보 업데이트 완료", Toast.LENGTH_SHORT).show()
+            visualMarker()
             fetchBikeStation()
         }
 
         else    {
-            recentUpdate = System.currentTimeMillis()
-            Toast.makeText(this,"잠시후 업데이트가 가능합니다", Toast.LENGTH_SHORT).show()
+            // 토스트 메시지가 표시 중일때 토스트 메시지 띄우는 코드 작동 중지
+            if (System.currentTimeMillis() - mUpdateWait >= 2000) {
+                Toast.makeText(this, String.format("%d초 후에 업데이트 가능합니다", 60-(System.currentTimeMillis() - recentUpdate)/1000), Toast.LENGTH_SHORT).show()
+                mUpdateWait = System.currentTimeMillis()
+            }
+
         }
 
     }
