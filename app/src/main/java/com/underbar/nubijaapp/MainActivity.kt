@@ -559,9 +559,7 @@ import retrofit2.converter.gson.GsonConverterFactory
                  if (bikestations.park != "null")  {
 
                      // 터미널이 가득 찬 경우 파란색 마커 표시
-                     if (bikestations.empty.toInt() == 0)    {
-                         marker.icon = blueMarkerOverlayImage
-                     }
+                     if (bikestations.empty.toInt() == 0) marker.icon = blueMarkerOverlayImage
 
                      else   {
                          when(bikestations.park.toInt())   {
@@ -575,9 +573,7 @@ import retrofit2.converter.gson.GsonConverterFactory
                  }
 
                  // 서버와 통신 문제로 주차 가능 댓수가 null 이면
-                 else   {
-                     marker.icon = grayMarkerOverlayImage
-                 }
+                 else   marker.icon = grayMarkerOverlayImage
 
 
                  marker.position = LatLng(bikestations.lat, bikestations.lng)
