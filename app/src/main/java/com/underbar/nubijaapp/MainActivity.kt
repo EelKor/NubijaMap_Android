@@ -549,8 +549,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 
              // 반복문으로 마커 생성
              for (bikestations in result.stations)  {
-
                  val marker = Marker()
+
+                 // 폐쇄된 터미널이면 마커 생성 하지 않음
+                 if (bikestations.empty == "cls") continue
 
                  // 대여 가능 자전거 댓수 기준으로 마커 색깔 결정
                  // 서버와 통신이 성공적 이면
