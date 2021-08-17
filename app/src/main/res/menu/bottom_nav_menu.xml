@@ -12,13 +12,14 @@
         android:id="@+id/menu_bus"
         android:title="주변 정류장"
         android:icon="@drawable/ic_baseline_favoriate"
-        android:checked="true"
+        android:enabled="true"
         />
 
     <item
         android:id="@+id/menu_menu1"
         android:title="메뉴"
         android:icon="@drawable/ic_baseline_menu"
+        android:enabled="true"
         />
 
 </menu>

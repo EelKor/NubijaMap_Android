@@ -4,17 +4,17 @@ plugins {
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.2"
+    compileSdkVersion 31
+    buildToolsVersion "30.0.3"
     viewBinding {
         enabled = true
     }
     defaultConfig {
         applicationId "com.underbar.nubijaapp"
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 30
-        versionCode 9
-        versionName "1.1.0"
+        versionCode 10
+        versionName "1.2.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

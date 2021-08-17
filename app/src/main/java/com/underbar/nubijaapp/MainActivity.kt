@@ -823,10 +823,6 @@ import retrofit2.converter.gson.GsonConverterFactory
                         visualMarker()
                         infoWindow.close()
                     }
-
-                    // 진동 효과
-                    // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                    // vibrator.vibrate(50)
             }
         }
 
