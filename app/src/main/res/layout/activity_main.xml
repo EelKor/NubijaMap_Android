@@ -15,7 +15,7 @@
     android:layout_above="@id/bottom_nav">
 
 
-    <fragment xmlns:app="http://schemas.android.com/apk/res-auto"
+    <fragment
 
         android:id="@+id/map"
         android:layout_width="match_parent"
@@ -28,25 +28,24 @@
 
 </FrameLayout>
 
-    <Button
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:id="@+id/updatebtn"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:src="@drawable/ic_refresh"
         android:layout_above="@id/bottom_nav"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_marginHorizontal="20dp"
 
         android:layout_marginVertical="20dp"
-        android:background="@drawable/button_shape"
-        android:drawableTop="@drawable/ic_refresh"
         android:paddingHorizontal="9dp"
         android:paddingVertical="9dp"
-        />
+        android:contentDescription="TODO" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
     android:id="@+id/bottom_nav"
-    
+
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_alignParentBottom="true"

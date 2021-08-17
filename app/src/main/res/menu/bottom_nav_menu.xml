@@ -4,12 +4,15 @@
         android:id="@+id/menu_bike"
         android:title="누비자"
         android:icon="@drawable/ic_baseline_pedal_bike"
+        android:enabled="false"
+        android:checkable="false"
         />
 
     <item
         android:id="@+id/menu_bus"
         android:title="주변 정류장"
         android:icon="@drawable/ic_baseline_favoriate"
+        android:checked="true"
         />
 
     <item

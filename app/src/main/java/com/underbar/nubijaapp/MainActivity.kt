@@ -25,6 +25,7 @@ import com.data.nubija.nubija
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.TedPermission
 import com.naver.maps.geometry.LatLng
@@ -119,8 +120,9 @@ import retrofit2.converter.gson.GsonConverterFactory
         //Id값의 옵션에 접근
         val bottom_nav : BottomNavigationView = findViewById(R.id.bottom_nav)
         bottom_nav.setOnNavigationItemSelectedListener(onBottomNavItemSelectedListener)
+        bottom_nav.selectedItemId = R.id.menu_bus
 
-        val update_btn : Button = findViewById(R.id.updatebtn)
+        val update_btn : FloatingActionButton = findViewById(R.id.updatebtn)
         update_btn.setOnClickListener(onUpdateBtnClickedListener)
 
 
