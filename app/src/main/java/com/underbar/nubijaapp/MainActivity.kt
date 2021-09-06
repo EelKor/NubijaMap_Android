@@ -419,41 +419,28 @@ import retrofit2.converter.gson.GsonConverterFactory
                     call: Call<List<nubija>>,
                     response: Response<List<nubija>>
             ) {
+                // 데이터가 수신되면
                 if (response.body() != null) {
 
+                        // 수신된 데이터 불러오기
                         val rawdata: List<nubija> = response.body()!!
+                        for (i in 0 until rawdata.size) {
 
-                        // 좌표값 불러오기
-                        val assetManager: AssetManager = resources.assets
-                        val inputStream = assetManager.open("nubijaData.json")
-                        val jsonString = inputStream.bufferedReader().use { it.readText() }
+                            val name = rawdata[i].Tmname
+                            val lats = rawdata[i].Lat
+                            val lngs = rawdata[i].Lng
+                            val vno = rawdata[i].Vno
 
-
-                        val jObject = JSONObject(jsonString)
-                        val jArray = jObject.getJSONArray("TerminalInfo")
-
-                        for (i in 0 until jArray.length()) {
-
-                            val obj = jArray.getJSONObject(i)
-                            val name = obj.getString("Tmname")
-                            val lats = obj.getString("Latitude")
-                            val lngs = obj.getString("Longitude")
-                            val vno = obj.getString("Vno")
-
-                            if (rawdata[i].Vno == vno.toString()) {
-                                val empty: String = rawdata[i].Emptycnt
-                                val park: String = rawdata[i].Parkcnt
-
-                                bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), empty, park))
-
-                            } else {
-                                bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
-                            }
+                            val empty: String = rawdata[i].Emptycnt
+                            val park: String = rawdata[i].Parkcnt
+                            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), empty, park))
 
                         }
 
                     }
+                // 수신받은 데이터가 없으면
                 else    {
+                    
                         Toast.makeText(this@MainActivity, "서버로 부터 데이터를 받아오는데 실패 했습니다", Toast.LENGTH_LONG).show()
                         // 서버와 통신 실패시
                         val assetManager: AssetManager = resources.assets
@@ -473,11 +460,9 @@ import retrofit2.converter.gson.GsonConverterFactory
                             val vno = obj.getString("Vno")
 
                             bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
-
                         }
-
                 }
-
+                // 마커 리스트 지도에 표시
                 bikeStationResult = BikeStationResult(bikeStationlists)
                 updateMapMarker(bikeStationResult)
 
