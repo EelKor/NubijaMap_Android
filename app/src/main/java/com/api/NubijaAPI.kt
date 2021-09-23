@@ -5,6 +5,6 @@ import retrofit2.Call
 import retrofit2.http.GET
 
 interface NubijaAPI {
-    @GET("/nubija")
+    @GET("/nubija2")
     fun getNubijaData() : Call<List<nubija>>
 }

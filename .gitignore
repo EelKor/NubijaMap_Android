@@ -1,7 +1,8 @@
 *.iml
 .gradle
 /local.properties
-.idea/
+.idea
+.idea/*.xml
 .DS_Store
 /build
 /captures
@@ -11,4 +12,5 @@ local.properties
 *.log
 *.apk
 *.json
+*.aab
 app/release/app-release.aab

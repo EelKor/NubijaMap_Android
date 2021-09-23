@@ -39,22 +39,21 @@
         android:layout_marginHorizontal="20dp"
 
         android:layout_marginVertical="20dp"
-        android:paddingHorizontal="9dp"
-        android:paddingVertical="9dp"
+        android:paddingHorizontal="0dp"
+        android:paddingVertical="0dp"
         android:contentDescription="TODO" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
-    android:id="@+id/bottom_nav"
+        android:id="@+id/bottom_nav"
 
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_alignParentBottom="true"
-    android:layout_centerHorizontal="true"
-    android:background="@color/white"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:background="@color/white"
 
-    app:menu="@menu/bottom_nav_menu"
-    app:labelVisibilityMode="labeled"
-    />
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav_menu" />
 
 
 
