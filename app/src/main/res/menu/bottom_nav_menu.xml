@@ -2,10 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/menu_bike"
-        android:title="누비자"
-        android:icon="@drawable/ic_baseline_pedal_bike"
-        android:enabled="false"
-        android:checkable="false"
+        android:title="대여하기"
+        android:icon="@drawable/ic_baseline_arrow_downward_24"
+        android:enabled="true"
+        android:checkable="true"
         />
 
     <item

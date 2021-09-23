@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.content.res.AssetManager
 import android.location.Location
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -247,20 +248,19 @@ import retrofit2.converter.gson.GsonConverterFactory
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, true)
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRAFFIC, false)
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRANSIT, false)
-
-
                 //네이버 지도 UI 세팅
                 val uiSettings = naverMap.uiSettings
                 uiSettings.isLocationButtonEnabled = true
                 uiSettings.isZoomControlEnabled = false
-
                 // 마커 새로고침
                 visualMarker()
-
                 // 인포 윈도우 열여 있다면, 닫기
                 if (infoWindow.isAdded) {
                     infoWindow.close()
                 }
+
+                val lentPage = Intent(Intent.ACTION_VIEW, Uri.parse("https://app.nubija.com"))
+                startActivity(lentPage)
 
             }
 
@@ -440,7 +440,7 @@ import retrofit2.converter.gson.GsonConverterFactory
                     }
                 // 수신받은 데이터가 없으면
                 else    {
-                    
+
                         Toast.makeText(this@MainActivity, "서버로 부터 데이터를 받아오는데 실패 했습니다", Toast.LENGTH_LONG).show()
                         // 서버와 통신 실패시
                         val assetManager: AssetManager = resources.assets
