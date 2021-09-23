@@ -7,8 +7,14 @@ import android.content.pm.PackageManager
 import android.content.res.AssetManager
 import android.location.Location
 import android.location.LocationManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.Settings
+import android.view.View
+import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +26,7 @@ import com.data.nubija.nubija
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.TedPermission
 import com.naver.maps.geometry.LatLng
@@ -56,6 +63,10 @@ import retrofit2.converter.gson.GsonConverterFactory
     // 뒤로가기 버튼 시간 측정 을 위해 선언된 변수
     // 시간측정을 토스트 메시지 겹침을 방지하기위한 시간 측정 함수
     private var mBackWait:Long = 0
+    private var mUpdateWait: Long = 0
+
+    // 최근 업데이트 시간
+    private var recentUpdate:Long = 0
 
     // 현재위치와 마커 사이의 거리, 현위치와 가까운 Top3 마커
      // findNearestStation() 에서 사용됨
@@ -63,7 +74,7 @@ import retrofit2.converter.gson.GsonConverterFactory
     private val nearestMarkers = mutableMapOf<Int, Int>()
     private var botNavMenuBusCallCount = 0
 
-
+    // 전역변수 선언
     companion object    {
         private const val LOCATION_PERMISSION_CODE = 1000
         private const val NUBIJA_API_SERVER_URL = "http://api.lessnas.me"
@@ -98,8 +109,6 @@ import retrofit2.converter.gson.GsonConverterFactory
     }
 
 
-
-
     //메모리에 올라갔을때
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,6 +121,10 @@ import retrofit2.converter.gson.GsonConverterFactory
         //Id값의 옵션에 접근
         val bottom_nav : BottomNavigationView = findViewById(R.id.bottom_nav)
         bottom_nav.setOnNavigationItemSelectedListener(onBottomNavItemSelectedListener)
+        bottom_nav.selectedItemId = R.id.menu_bus
+
+        val update_btn : FloatingActionButton = findViewById(R.id.updatebtn)
+        update_btn.setOnClickListener(onUpdateBtnClickedListener)
 
 
 
@@ -148,7 +161,7 @@ import retrofit2.converter.gson.GsonConverterFactory
     private val permissionListener = object : PermissionListener {
         override fun onPermissionGranted() {
 
-            val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
             // 권한은 허용 되었으나 위치 설정이 꺼저있을때 위치 설정 페이지로 이동
             if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))  {
@@ -186,19 +199,16 @@ import retrofit2.converter.gson.GsonConverterFactory
 
         }
 
-        override fun onPermissionDenied(deniedPermissions: ArrayList<String>?) {
-
+        override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
             // 구글 정책상 최소 사용
             infoWindowSetting()
             fetchBikeStation()
-
         }
+
     }
 
-
+    // 권한 허용하지 않았을떄 작동 되는 함수
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-
-
         if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults))  {
             if (locationSource.isActivated) {   //권한 거부됨
                 naverMap.locationTrackingMode = LocationTrackingMode.None
@@ -210,10 +220,25 @@ import retrofit2.converter.gson.GsonConverterFactory
     }
 
 
+    // #############################################################################################
+    // ###################################  레이 아웃 섹션  ###########################################
+    // #############################################################################################
+    // 여기서 부터는 레이 아웃 작동 코드
+    // onCreate() 에서 FindViewById 객체 생성후 사용
 
-
-    //바텀 내비게이션 아이템이 눌러졌을때
+    // 1. 바텀 내비게이션 아이템이 눌러졌을때
      private val onBottomNavItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener {
+        // 진동 효과
+        val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+        // 진동 효과 버전 확인
+        val vibrationEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            VibrationEffect.createOneShot(10, 150)
+        } else {
+            TODO("VERSION.SDK_INT < O")
+        }
+        vibrator.vibrate(vibrationEffect)
+
         //스위치 문
         // 하단 내비게이션 바 버튼이 클릭 됬을때 실행할 동작
         when(it.itemId){
@@ -223,20 +248,19 @@ import retrofit2.converter.gson.GsonConverterFactory
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, true)
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRAFFIC, false)
                 naverMap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRANSIT, false)
-
-
                 //네이버 지도 UI 세팅
                 val uiSettings = naverMap.uiSettings
                 uiSettings.isLocationButtonEnabled = true
                 uiSettings.isZoomControlEnabled = false
-
                 // 마커 새로고침
                 visualMarker()
-
                 // 인포 윈도우 열여 있다면, 닫기
                 if (infoWindow.isAdded) {
                     infoWindow.close()
                 }
+
+                val lentPage = Intent(Intent.ACTION_VIEW, Uri.parse("https://app.nubija.com"))
+                startActivity(lentPage)
 
             }
 
@@ -269,7 +293,7 @@ import retrofit2.converter.gson.GsonConverterFactory
     }
 
 
-    // 뒤로가기 버튼 이 눌러졌을때
+    // 2. 뒤로가기 버튼 이 눌러졌을때
     override fun onBackPressed() {
 
         //뒤로가기 2번 누를때 종료 기능 구현
@@ -283,6 +307,46 @@ import retrofit2.converter.gson.GsonConverterFactory
             finish()
         }
     }
+
+    // 3. 업데이트 버튼이 눌러졌을때
+    private val onUpdateBtnClickedListener = View.OnClickListener {
+        // 진동 효과
+        val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+        // 진동 효과 버전 확인
+        val vibrationEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            VibrationEffect.createOneShot(10, 150)
+        } else {
+            TODO("VERSION.SDK_INT < O")
+        }
+        vibrator.vibrate(vibrationEffect)
+
+        // 버튼이 눌러진 시간 확인
+        // 1분에 한번씩만 업데이트 가능
+        if (System.currentTimeMillis() - recentUpdate >= 60000){
+            recentUpdate = System.currentTimeMillis()
+            Toast.makeText(this,"터미널 정보 업데이트 완료", Toast.LENGTH_SHORT).show()
+            visualMarker()
+            fetchBikeStation()
+        }
+
+        else    {
+            // 토스트 메시지가 표시 중일때 토스트 메시지 띄우는 코드 작동 중지
+            if (System.currentTimeMillis() - mUpdateWait >= 2000) {
+                Toast.makeText(this, String.format("%d초 후에 업데이트 가능합니다", 60-(System.currentTimeMillis() - recentUpdate)/1000), Toast.LENGTH_SHORT).show()
+                mUpdateWait = System.currentTimeMillis()
+            }
+
+        }
+
+    }
+
+
+
+    // #############################################################################################
+    // #############################################################################################
+
+
 
     // mapFragment.getMapAsync(this) 에 의해 호출됨
     override fun onMapReady(naverMap: NaverMap) {
@@ -355,45 +419,28 @@ import retrofit2.converter.gson.GsonConverterFactory
                     call: Call<List<nubija>>,
                     response: Response<List<nubija>>
             ) {
-                    if (response.body() != null) {
+                // 데이터가 수신되면
+                if (response.body() != null) {
 
-                        Toast.makeText(this@MainActivity, "실시간 터미널 현황은 실제와 차이가 있을수 있습니다", Toast.LENGTH_SHORT).show()
+                        // 수신된 데이터 불러오기
                         val rawdata: List<nubija> = response.body()!!
+                        for (i in 0 until rawdata.size) {
 
-                        // 좌표값 불러오기
-                        val assetManager: AssetManager = resources.assets
-                        val inputStream = assetManager.open("nubijaData.json")
-                        val jsonString = inputStream.bufferedReader().use { it.readText() }
+                            val name = rawdata[i].Tmname
+                            val lats = rawdata[i].Lat
+                            val lngs = rawdata[i].Lng
+                            val vno = rawdata[i].Vno
 
-
-                        val jObject = JSONObject(jsonString)
-                        val jArray = jObject.getJSONArray("TerminalInfo")
-
-                        for (i in 0 until jArray.length()) {
-
-                            val obj = jArray.getJSONObject(i)
-                            val name = obj.getString("Tmname")
-                            val lats = obj.getString("Latitude")
-                            val lngs = obj.getString("Longitude")
-                            val vno = obj.getString("Vno")
-
-                            if (rawdata[i].Vno == vno.toString()) {
-                                val empty: String = rawdata[i].Emptycnt
-                                val park: String = rawdata[i].Parkcnt
-
-                                bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), empty, park))
-
-                            } else {
-                                bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
-                            }
+                            val empty: String = rawdata[i].Emptycnt
+                            val park: String = rawdata[i].Parkcnt
+                            bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), empty, park))
 
                         }
 
-                        bikeStationResult = BikeStationResult(bikeStationlists)
-                        updateMapMarker(bikeStationResult)
-
                     }
+                // 수신받은 데이터가 없으면
                 else    {
+
                         Toast.makeText(this@MainActivity, "서버로 부터 데이터를 받아오는데 실패 했습니다", Toast.LENGTH_LONG).show()
                         // 서버와 통신 실패시
                         val assetManager: AssetManager = resources.assets
@@ -413,12 +460,11 @@ import retrofit2.converter.gson.GsonConverterFactory
                             val vno = obj.getString("Vno")
 
                             bikeStationlists.add(BikeStation(name, lats.toDouble(), lngs.toDouble(), vno.toInt(), "null", "null"))
-
                         }
-                        bikeStationResult = BikeStationResult(bikeStationlists)
-                        updateMapMarker(bikeStationResult)
-
                 }
+                // 마커 리스트 지도에 표시
+                bikeStationResult = BikeStationResult(bikeStationlists)
+                updateMapMarker(bikeStationResult)
 
 
             }
@@ -490,17 +536,17 @@ import retrofit2.converter.gson.GsonConverterFactory
 
              // 반복문으로 마커 생성
              for (bikestations in result.stations)  {
-
                  val marker = Marker()
+
+                 // 폐쇄된 터미널이면 마커 생성 하지 않음
+                 if (bikestations.empty == "cls") continue
 
                  // 대여 가능 자전거 댓수 기준으로 마커 색깔 결정
                  // 서버와 통신이 성공적 이면
                  if (bikestations.park != "null")  {
 
                      // 터미널이 가득 찬 경우 파란색 마커 표시
-                     if (bikestations.empty.toInt() == 0)    {
-                         marker.icon = blueMarkerOverlayImage
-                     }
+                     if (bikestations.empty.toInt() == 0) marker.icon = blueMarkerOverlayImage
 
                      else   {
                          when(bikestations.park.toInt())   {
@@ -514,9 +560,7 @@ import retrofit2.converter.gson.GsonConverterFactory
                  }
 
                  // 서버와 통신 문제로 주차 가능 댓수가 null 이면
-                 else   {
-                     marker.icon = grayMarkerOverlayImage
-                 }
+                 else   marker.icon = grayMarkerOverlayImage
 
 
                  marker.position = LatLng(bikestations.lat, bikestations.lng)
@@ -533,13 +577,19 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     }
 
-
     // 마커가 클릭되면 호출 됨
     private val listener = Overlay.OnClickListener {overlay ->
 
         // 진동 효과
-        // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        //vibrator.vibrate(50)
+        val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+        // 진동 효과 버전 확인
+        val vibrationEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            VibrationEffect.createOneShot(10, 150)
+        } else {
+            TODO("VERSION.SDK_INT < O")
+        }
+        vibrator.vibrate(vibrationEffect)
 
         // 마커 초기화
         for (marker in nubijaMarkerMap.values) {
@@ -673,8 +723,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     }
 
-
-
+    // 누비자 마커 리스트 초기화
     private fun resetNubijaMarkerList(){
         if (nubijaMarkerMap.isEmpty() ) {
             for (marker in nubijaMarkerMap.values) {
@@ -682,7 +731,6 @@ import retrofit2.converter.gson.GsonConverterFactory
             }
         }
     }
-
 
     // 바텀 네비게이션 클릭시 마커 재생성 때 사용
     private fun visualMarker() {
@@ -760,10 +808,6 @@ import retrofit2.converter.gson.GsonConverterFactory
                         visualMarker()
                         infoWindow.close()
                     }
-
-                    // 진동 효과
-                    // val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                    // vibrator.vibrate(50)
             }
         }
 
@@ -784,7 +828,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     }
 
-
     //현재 위치에서 최단직선거리 정류장 찾기 메소드
     private fun findNearestStation() {
 
@@ -800,7 +843,7 @@ import retrofit2.converter.gson.GsonConverterFactory
             for (index in 1..3)   {
                 for (tag in distances.keys)   {
 
-                    if (distances[tag] == distances.values.min()!!)    {
+                    if (distances[tag] == distances.values.minOrNull()!!)    {
                         nearestMarkers.put(index, tag)
                         distances.remove(tag)
                         break
@@ -871,6 +914,5 @@ import retrofit2.converter.gson.GsonConverterFactory
 
     }
 
+ }
 
-
-}

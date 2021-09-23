@@ -1,12 +1,8 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+.idea
+.idea/*.xml
 .DS_Store
 /build
 /captures
@@ -16,4 +12,5 @@ local.properties
 *.log
 *.apk
 *.json
+*.aab
 app/release/app-release.aab

@@ -3,11 +3,10 @@ package com.underbar.nubijaapp
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
+import androidx.appcompat.widget.SwitchCompat
 
-class MenuActivity : AppCompatActivity() {
-
+class MenuActivity : AppCompatActivity(){
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,10 +25,13 @@ class MenuActivity : AppCompatActivity() {
 
         }
 
+        // 라이센스 정보 버튼 클릭시
         val btn_license:Button = findViewById(R.id.btn_license)
         btn_license.setOnClickListener {
             val licenseIntent = Intent(this, MenuLicenseActivity::class.java)
             startActivity(licenseIntent)
         }
+
+
     }
 }
