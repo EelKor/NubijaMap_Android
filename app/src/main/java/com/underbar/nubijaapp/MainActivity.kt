@@ -69,13 +69,17 @@ import retrofit2.converter.gson.GsonConverterFactory
     private var recentUpdate:Long = 0
 
     // 현재위치와 마커 사이의 거리, 현위치와 가까운 Top3 마커
-     // findNearestStation() 에서 사용됨
+    // findNearestStation() 에서 사용됨
     private val distances = mutableMapOf<Int, Double>()
     private val nearestMarkers = mutableMapOf<Int, Int>()
     private var botNavMenuBusCallCount = 0
 
+    private var globalIsFirstUseOfRentPage = false
+
+
     // 전역변수 선언
     companion object    {
+
         private const val LOCATION_PERMISSION_CODE = 1000
         private const val NUBIJA_API_SERVER_URL = "http://api.lessnas.me"
 
@@ -105,7 +109,6 @@ import retrofit2.converter.gson.GsonConverterFactory
         private val grayMarkerOverlayImage = OverlayImage.fromResource(R.drawable.ic_bike_gray)
         private val grayMarkerOverlayImageClicked = OverlayImage.fromResource(R.drawable.ic_bike_gray_clicked)
 
-
     }
 
 
@@ -115,6 +118,11 @@ import retrofit2.converter.gson.GsonConverterFactory
 
         //레이아웃과 연결
         setContentView(R.layout.activity_main)
+
+        //SharedPreferences 접근 및 현재 대여 페이지 교육 여부 확인
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+        val isFirstUseOfRentPage = pref.getBoolean("isFirstUseOfRentPage", true)
+        globalIsFirstUseOfRentPage = isFirstUseOfRentPage
 
 
         //FindViewById 로 Id값을 불러온후
@@ -259,8 +267,23 @@ import retrofit2.converter.gson.GsonConverterFactory
                     infoWindow.close()
                 }
 
-                val lentPage = Intent(Intent.ACTION_VIEW, Uri.parse("https://app.nubija.com"))
-                startActivity(lentPage)
+                //----------------------------------------------------------------------------------
+                // 대여 페이지 관련 액티비티 실행
+
+                if (globalIsFirstUseOfRentPage) {
+                    val manual = Intent(this, RentPageManual::class.java)
+                    startActivity(manual)
+                    
+                    // 대여 페이지 사용법 교육확인 기록
+                    val pref = this.getPreferences(Context.MODE_PRIVATE)
+                    val editor = pref.edit()
+                    editor.putBoolean("isFirstUseOfRentPage", false)
+                }
+                else    {
+                    val rentPage = Intent(Intent.ACTION_VIEW, Uri.parse("https://app.nubija.com"))
+                    startActivity(rentPage)
+                }
+
 
             }
 
@@ -272,9 +295,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 
                 else    {
                     if (nubijaMarkerMap.isNotEmpty())   {
-                        
                         // 내 위치 조회
                         naverMap.locationTrackingMode = LocationTrackingMode.Follow
+
                         // 최단직선거리 정류장 찾기
                         findNearestStation()
                         botNavMenuBusCallCount += 1
@@ -424,7 +447,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
                         // 수신된 데이터 불러오기
                         val rawdata: List<nubija> = response.body()!!
-                        for (i in 0 until rawdata.size) {
+                        for (i in rawdata.indices) {
 
                             val name = rawdata[i].Tmname
                             val lats = rawdata[i].Lat
@@ -477,14 +500,14 @@ import retrofit2.converter.gson.GsonConverterFactory
                 builder.setMessage("인터넷 연결 상태를 확인해 주세요")
                 builder.setPositiveButton(
                         "설정"
-                ) { dialog, which ->
+                ) { _ , _ ->
                     val intent = Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS)
                     intent.addCategory(Intent.CATEGORY_DEFAULT)
                     startActivity(intent)
                 }
                 builder.setNegativeButton(
                         "아니오"
-                ) { dialog, which ->
+                ) { _ , _ ->
                     Toast.makeText(this@MainActivity, "서비스 이용을 위해 인터넷을 켜주세요", Toast.LENGTH_LONG).show()
 
                     //네이버 지도 UI 세팅
@@ -569,7 +592,7 @@ import retrofit2.converter.gson.GsonConverterFactory
                  // 마커 테그로 고유의 ID 부여
                  marker.tag = bikestations.tmid
                  marker.onClickListener = listener
-                 nubijaMarkerMap.put(bikestations.tmid , marker)
+                 nubijaMarkerMap[bikestations.tmid] = marker
 
              }
 
@@ -792,7 +815,7 @@ import retrofit2.converter.gson.GsonConverterFactory
         // InfoWindow 설정
 
         // 지도 가 클릭 됬을때 -> InfoWindow 닫기
-        naverMap.setOnMapClickListener { pointF, latLng ->
+        naverMap.setOnMapClickListener { _ , _ ->
 
             if (infoWindow.isAdded) {
 
@@ -802,7 +825,7 @@ import retrofit2.converter.gson.GsonConverterFactory
         }
 
         // 지도가 스크롤 됬을때 -> InfoWindow 닫기
-        naverMap.addOnCameraChangeListener { reason, animate ->
+        naverMap.addOnCameraChangeListener { reason, _ ->
             if (reason == CameraUpdate.REASON_GESTURE)  {
                 if (infoWindow.isAdded) {
                         visualMarker()
@@ -831,28 +854,23 @@ import retrofit2.converter.gson.GsonConverterFactory
     //현재 위치에서 최단직선거리 정류장 찾기 메소드
     private fun findNearestStation() {
 
-        // 최초 실행시( distances 가 비어 있을때 ) distances 초기화
-
             // 현재 위치 불러오기 LatLng 형식
             val currentLocation = naverMap.locationOverlay.position
 
             for (marker in bikeStationResult.stations)  {
-                distances.put(marker.tmid, currentLocation.distanceTo(LatLng(marker.lat, marker.lng)))
+                distances[marker.tmid] = currentLocation.distanceTo(LatLng(marker.lat, marker.lng))
             }
-
+            
+            //현재위치 에서 최단거리 마커 3개 구하기
             for (index in 1..3)   {
                 for (tag in distances.keys)   {
 
                     if (distances[tag] == distances.values.minOrNull()!!)    {
-                        nearestMarkers.put(index, tag)
+                        nearestMarkers[index] = tag
                         distances.remove(tag)
                         break
                     }
-
-
                 }
-
-
             }
 
         if (botNavMenuBusCallCount > 2) {
@@ -860,6 +878,11 @@ import retrofit2.converter.gson.GsonConverterFactory
         }
 
         val markerTag = nearestMarkers[botNavMenuBusCallCount+1]
+
+        // 첫번째 클릭시 안내 메시지 띄우기
+        if (botNavMenuBusCallCount+1 == 1)
+            Toast.makeText(this,"두번 더 눌러보세요~", Toast.LENGTH_SHORT).show()
+
         //찾은 최단거리 마커 인포윈도우 띄우기
         if (nubijaMarkerMap[markerTag] != null)  {
             val marker = nubijaMarkerMap[markerTag]!!
@@ -878,27 +901,23 @@ import retrofit2.converter.gson.GsonConverterFactory
 
                     // 서버로 부터 성공적으로 Parkcnt 받았을떄
                     if (bikeStationResult.stations[i].park != "null")   {
-                        // 터미널이 가득 찬 경우 파란색 마커 표시
-                        if (bikeStationResult.stations[i].empty.toInt() == 0)    {
-                            marker.icon = blueMarkerOverlayImageClicked
-                        }
 
+                        // 터미널이 가득 찬 경우 파란색 마커 표시
+                        if (bikeStationResult.stations[i].empty.toInt() == 0)
+                            marker.icon = blueMarkerOverlayImageClicked
                         else {
                             when (bikeStationResult.stations[i].park.toInt()) {
                                 in MIN_GREEN_BIKE_INDEX until MAX_GREEN_BIKE_INDEX -> marker.icon =
                                         greenMarkerOverlayImageClicked
-
                                 in MIN_YELLOW_BIKE_INDEX until MAX_YELLOW_BIKE_INDEX -> marker.icon =
                                         yellowMarkerOverlayImageClicked
-
                                 in MIN_RED_BIKE_INDEX until MAX_RED_BIKE_INDEX -> marker.icon =
                                         redMarkerOverlayImageClicked
-
                                 else -> marker.icon =
                                         grayMarkerOverlayImageClicked
-
                             }
                         }
+
                     }
 
                     // 통신에 실패해 Parkcnt 가 null 일때
@@ -906,7 +925,9 @@ import retrofit2.converter.gson.GsonConverterFactory
                         marker.icon = grayMarkerOverlayImageClicked
                     }
                 }
+
             }
+
             infoWindow.open(marker)
         }
 

@@ -4,14 +4,11 @@
     package="com.underbar.nubijaapp">
     <!-- 네이버 지도 위치 정보 수집 동의 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <!-- 진동 권한 -->
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- 인터넷 접속 권한 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- 진동 권한 -->
+    <uses-permission android:name="android.permission.VIBRATE" /> <!-- 인터넷 접속 권한 -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-
         android:allowBackup="true"
         android:icon="@mipmap/ic_main"
         android:label="창원자전go"
@@ -20,17 +17,25 @@
         android:theme="@style/Theme.NubijaApp"
         android:usesCleartextTraffic="true"
         tools:targetApi="n">
-
-        <activity android:name=".MenuLicenseActivity"
-            android:exported="true"/>
-
-        <activity android:name=".MenuAboutActivity"
-            android:exported="true"/>
-
-        <activity android:name=".MenuActivity"
-            android:exported="true"/>
-
-        <activity android:name=".SplashActivity"
+        <activity
+            android:name=".RentPageManual"
+            android:exported="true" />
+        <activity
+            android:name=".RentManualActivity"
+            android:exported="true"
+            android:label="@string/title_activity_rent_manual"
+            android:theme="@style/Theme.NubijaApp.NoActionBar" />
+        <activity
+            android:name=".MenuLicenseActivity"
+            android:exported="true" />
+        <activity
+            android:name=".MenuAboutActivity"
+            android:exported="true" />
+        <activity
+            android:name=".MenuActivity"
+            android:exported="true" />
+        <activity
+            android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,11 +43,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".MainActivity"
-            android:exported="true"/>
-
-        <!-- 네이버 지도 인증 키 -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true" /> <!-- 네이버 지도 인증 키 -->
         <meta-data
             android:name="com.naver.maps.map.CLIENT_ID"
             android:value="61eyickbg8" />
