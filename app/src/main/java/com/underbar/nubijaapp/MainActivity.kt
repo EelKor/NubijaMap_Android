@@ -1,13 +1,12 @@
  package com.underbar.nubijaapp
 
-import android.Manifest
+import  android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.AssetManager
 import android.location.Location
 import android.location.LocationManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -119,9 +118,7 @@ import retrofit2.converter.gson.GsonConverterFactory
         setContentView(R.layout.activity_main)
 
         //SharedPreferences 접근 및 현재 대여 페이지 교육 여부 확인
-        val pref = this.getPreferences(Context.MODE_PRIVATE)
-        val isFirstUseOfRentPage = pref.getBoolean("isFirstUseOfRentPage", true)
-        globalIsFirstUseOfRentPage = isFirstUseOfRentPage
+        globalIsFirstUseOfRentPage = App.prefs.myEditSetting
 
 
         //FindViewById 로 Id값을 불러온후
@@ -268,18 +265,16 @@ import retrofit2.converter.gson.GsonConverterFactory
 
                 //----------------------------------------------------------------------------------
                 // 대여 페이지 관련 액티비티 실행
-
+                globalIsFirstUseOfRentPage = App.prefs.myEditSetting
                 if (globalIsFirstUseOfRentPage) {
-                    val manual = Intent(this, RentPageManual::class.java)
+                    val manual = Intent(this, RentPageManualActivity::class.java)
                     startActivity(manual)
                     
                     // 대여 페이지 사용법 교육확인 기록
-                    val pref = this.getPreferences(Context.MODE_PRIVATE)
-                    val editor = pref.edit()
-                    editor.putBoolean("isFirstUseOfRentPage", false)
+                    App.prefs.myEditSetting = false
                 }
                 else    {
-                    val rentPage = Intent(Intent.ACTION_VIEW, Uri.parse("https://app.nubija.com"))
+                    val rentPage = Intent(this, RentPageActivity::class.java)
                     startActivity(rentPage)
                 }
 

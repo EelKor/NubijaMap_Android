@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_main"
         android:label="창원자전go"
@@ -18,13 +19,11 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="n">
         <activity
-            android:name=".RentPageManual"
+            android:name=".RentPageActivity"
             android:exported="true" />
         <activity
-            android:name=".RentManualActivity"
-            android:exported="true"
-            android:label="@string/title_activity_rent_manual"
-            android:theme="@style/Theme.NubijaApp.NoActionBar" />
+            android:name=".RentPageManualActivity"
+            android:exported="true" />
         <activity
             android:name=".MenuLicenseActivity"
             android:exported="true" />
