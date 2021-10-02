@@ -12,7 +12,7 @@
         android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_main"
-        android:label="창원자전go"
+        android:label="창원자전GO"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.NubijaApp"
