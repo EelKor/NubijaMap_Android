@@ -266,6 +266,7 @@ import retrofit2.converter.gson.GsonConverterFactory
                 //----------------------------------------------------------------------------------
                 // 대여 페이지 관련 액티비티 실행
                 globalIsFirstUseOfRentPage = App.prefs.myEditSetting
+                globalIsFirstUseOfRentPage = false
                 if (globalIsFirstUseOfRentPage) {
                     val manual = Intent(this, RentPageManualActivity::class.java)
                     startActivity(manual)

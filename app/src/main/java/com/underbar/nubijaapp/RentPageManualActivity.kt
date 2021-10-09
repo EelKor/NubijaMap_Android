@@ -31,7 +31,7 @@ class RentPageManualActivity : AppCompatActivity() {
         binding.btnNext.setOnClickListener {
             page += 1
 
-            if (page > 3)   {
+            if (page > 5)   {
                 val rentPage = Intent(this, RentPageActivity::class.java)
                 startActivity(rentPage)
                 finish()
@@ -77,6 +77,18 @@ class RentPageManualActivity : AppCompatActivity() {
             3 -> {
                 val transaction = supportFragmentManager.beginTransaction()
                     .replace(R.id.frameLayout, ManualPage3Fragment())
+                transaction.commit()
+            }
+
+            4 -> {
+                val transaction = supportFragmentManager.beginTransaction()
+                    .replace(R.id.frameLayout, ManualPage4Fragment())
+                transaction.commit()
+            }
+
+            5 -> {
+                val transaction = supportFragmentManager.beginTransaction()
+                    .replace(R.id.frameLayout, ManualPage5Fragment())
                 transaction.commit()
             }
         }
