@@ -236,12 +236,10 @@ import retrofit2.converter.gson.GsonConverterFactory
         val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
         // 진동 효과 버전 확인
-        val vibrationEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            VibrationEffect.createOneShot(10, 150)
-        } else {
-            TODO("VERSION.SDK_INT < O")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val vibrationEffect = VibrationEffect.createOneShot(10, 150)
+            vibrator.vibrate(vibrationEffect)
         }
-        vibrator.vibrate(vibrationEffect)
 
         //스위치 문
         // 하단 내비게이션 바 버튼이 클릭 됬을때 실행할 동작
