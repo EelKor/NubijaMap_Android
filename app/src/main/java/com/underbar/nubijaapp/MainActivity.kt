@@ -596,16 +596,17 @@ import retrofit2.converter.gson.GsonConverterFactory
     // 마커가 클릭되면 호출 됨
     private val listener = Overlay.OnClickListener {overlay ->
 
-        // 진동 효과
+        // 진동 효과 객체 선언
         val vibrator: Vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
-        // 진동 효과 버전 확인
-        val vibrationEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            VibrationEffect.createOneShot(10, 150)
-        } else {
-            TODO("VERSION.SDK_INT < O")
+        // 진동 효과 버전 확인후 해당 안드로이드 버전에 맞는 진동 메소드 사용
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(10, 150))
         }
-        vibrator.vibrate(vibrationEffect)
+        else {
+            vibrator.vibrate(10)
+        }
+
 
         // 마커 초기화
         for (marker in nubijaMarkerMap.values) {
